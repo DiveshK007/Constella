@@ -55,6 +55,10 @@
 |:---:|:---:|
 | ![Sending Transaction](screenshots/3-send-transaction.png) | ![Transaction Result](screenshots/4-transaction-result.png) |
 
+| Workflow Builder |
+|:---:|
+| ![Workflow Builder](screenshots/5-workflow-builder.png) |
+
 ---
 
 ## 🎥 Demo Video
