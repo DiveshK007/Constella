@@ -63,7 +63,7 @@
 
 ## 🎥 Demo Video
 
-> 🎬 [Watch the full demo walkthrough →](https://drive.google.com)
+> 🎬 [Watch the full demo walkthrough →](https://drive.google.com/file/d/1Bpd0j19UQHI7uDELugcD40GTXHxeFfjB/view?usp=drive_link)
 > 
 > Covers: Wallet connection • Balance check • XLM transfer • Soroban contract • Workflow builder
 
