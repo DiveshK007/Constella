@@ -9,6 +9,7 @@
  */
 
 // Start the Express server
+import TelegramBot from "node-telegram-bot-api";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";

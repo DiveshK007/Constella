@@ -1,0 +1,162 @@
+========================================
+ StellrFlow Deep Analysis Test Report
+ Wed Feb 11 12:55:32 IST 2026
+========================================
+
+── 1. HEALTH & STATUS ──
+❌ Health endpoint
+   Expected: "status":"ok"
+   Got: 
+
+── 2. ANCHOR - EXCHANGE RATES ──
+❌ Get all rates
+   Expected: "success":true
+   Got: 
+
+❌ Rates contain USD
+   Expected: "currency":"USD"
+   Got: 
+
+❌ Rates contain EUR
+   Expected: "currency":"EUR"
+   Got: 
+
+❌ Rates contain INR
+   Expected: "currency":"INR"
+   Got: 
+
+❌ Rates contain GBP
+   Expected: "currency":"GBP"
+   Got: 
+
+── 3. WALLET MANAGEMENT ──
+❌ Create wallet (user A)
+   Expected: "success":true
+   Got: 
+
+❌ Create wallet (user B)
+   Expected: "success":true
+   Got: 
+
+❌ Get wallet A
+   Expected: "success":true
+   Got: 
+
+❌ Get wallet B
+   Expected: "success":true
+   Got: 
+
+❌ Get nonexistent wallet
+   Expected: "success":false
+   Got: 
+
+── 4. WALLET BALANCE ──
+❌ Balance user A
+   Expected: balance
+   Got: 
+
+── 5. WALLET FUNDING (Friendbot) ──
+❌ Fund wallet A via Friendbot
+   Expected: success
+   Got: 
+
+── 6. ANCHOR DEPOSIT (On-Ramp) ──
+❌ Deposit 50 USD for userA
+   Expected: "success":true
+   Got: 
+
+❌ Deposit 100 EUR for userA
+   Expected: "success":true
+   Got: 
+
+❌ Deposit missing params
+   Expected: amount
+   Got: 
+
+── 7. ANCHOR WITHDRAW (Off-Ramp) ──
+❌ Withdraw 10 XLM for userA
+   Expected: success
+   Got: 
+
+❌ Withdraw missing params
+   Expected: xlmAmount
+   Got: 
+
+── 8. ANCHOR HISTORY ──
+❌ Tx history for userA
+   Expected: success
+   Got: 
+
+── 9. SEND XLM ──
+   UserB pubkey: 
+❌ Could not get userB public key
+── 10. SESSION MANAGEMENT ──
+❌ Register session
+   Expected: success
+   Got: 
+
+❌ Get session
+   Expected: sessUser
+   Got: 
+
+❌ Delete session
+   Expected: success
+   Got: 
+
+── 11. FREIGHTER WALLET ──
+❌ Connect Freighter
+   Expected: success
+   Got: 
+
+❌ Get Freighter wallet
+   Expected: publicKey
+   Got: 
+
+❌ Disconnect Freighter
+   Expected: success
+   Got: 
+
+── 12. AUTOPAY ──
+❌ Create autopay schedule
+   Expected: success
+   Got: 
+
+❌ List autopay for userA
+   Expected: success
+   Got: 
+
+── 13. MULTISIG ──
+❌ Create multisig tx
+   Expected: success
+   Got: 
+
+❌ List multisig for userA
+   Expected: success
+   Got: 
+
+── 14. TRANSACTION BUILD ──
+❌ Build tx (missing params)
+   Expected: error
+   Got: 
+
+── 15. STELLAR BALANCE BY ADDRESS ──
+❌ Stellar balance for userA address
+   Expected: balance
+   Got: 
+
+── 16. EDGE CASES ──
+❌ Invalid endpoint returns 404
+   Expected: 404\|Cannot GET
+   Got: 
+
+❌ Deposit with 0 amount
+   Expected: error\|amount
+   Got: 
+
+❌ Withdraw more than balance
+   Expected: error\|insufficient\|Insufficient\|not enough\|fail
+   Got: 
+
+========================================
+ SUMMARY: 0 passed, 35 failed
+========================================

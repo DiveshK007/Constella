@@ -2,6 +2,16 @@
 
 Telegram bot + REST API backend for the StellrFlow hackathon project. Handles wallet management, XLM payments, fiat on/off ramp (anchor), recurring payments (AutoPay), and multi-signature transactions — all on Stellar testnet.
 
+## Screenshots
+
+| Wallet Connected | Balance Display |
+|:---:|:---:|
+| ![Wallet Connected](screenshots/1-wallet-connected.png) | ![Balance Display](screenshots/2-balance-display.png) |
+
+| Sending Transaction | Transaction Result |
+|:---:|:---:|
+| ![Sending Transaction](screenshots/3-send-transaction.png) | ![Transaction Result](screenshots/4-transaction-result.png) |
+
 ## Architecture
 
 ```

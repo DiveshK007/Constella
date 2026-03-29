@@ -639,49 +639,6 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
           break;
         }
 
-        case "autopay": {
-          const autopayResult = await nodeExecutors.executeAutoPay(
-            node.data.config,
-            inputData
-          );
-
-          set((state) => ({
-            nodeResults: { ...state.nodeResults, [nodeId]: autopayResult },
-            nodeExecutionState: {
-              ...state.nodeExecutionState,
-              [nodeId]: "success",
-            },
-          }));
-
-          for (const edge of edges.filter((e) => e.source === nodeId)) {
-            await get().executeNode(edge.target, { ...inputData, ...autopayResult });
-          }
-
-          result = autopayResult;
-          break;
-        }
-
-        case "multisig": {
-          const multisigResult = await nodeExecutors.executeMultisig(
-            node.data.config,
-            inputData
-          );
-
-          set((state) => ({
-            nodeResults: { ...state.nodeResults, [nodeId]: multisigResult },
-            nodeExecutionState: {
-              ...state.nodeExecutionState,
-              [nodeId]: "success",
-            },
-          }));
-
-          for (const edge of edges.filter((e) => e.source === nodeId)) {
-            await get().executeNode(edge.target, { ...inputData, ...multisigResult });
-          }
-
-          result = multisigResult;
-          break;
-        }
 
         default: {
           if (
@@ -714,6 +671,15 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     }
   },
 
-  saveWorkflow: () => { },
-  loadWorkflow: () => { },
+  saveWorkflow: () => {
+    const { nodes, edges } = get();
+    localStorage.setItem('stellrflow_workflow', JSON.stringify({ nodes, edges }));
+  },
+  loadWorkflow: () => {
+    const saved = localStorage.getItem('stellrflow_workflow');
+    if (saved) {
+      const { nodes, edges } = JSON.parse(saved);
+      set({ nodes, edges });
+    }
+  },
 }));
