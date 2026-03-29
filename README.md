@@ -11,6 +11,9 @@
   [![Soroban](https://img.shields.io/badge/Soroban-Smart_Contracts-orange)](https://soroban.stellar.org/)
   [![Tests](https://img.shields.io/badge/Tests-52_Passing-success)](bots/telegram-stellar/jest.config.cjs)
   [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+  [![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-black)](https://stellr-flow-6rcr.vercel.app/)
+  
+  🌐 **[Live Demo → stellr-flow-6rcr.vercel.app](https://stellr-flow-6rcr.vercel.app/)**
 </div>
 
 ---
