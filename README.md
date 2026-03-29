@@ -12,6 +12,7 @@
   [![Tests](https://img.shields.io/badge/Tests-52_Passing-success)](bots/telegram-stellar/jest.config.cjs)
   [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
   [![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-black)](https://stellr-flow-6rcr.vercel.app/)
+  [![CI](https://github.com/DiveshK007/StellrFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/DiveshK007/StellrFlow/actions/workflows/ci.yml)
   
   🌐 **[Live Demo → stellr-flow-6rcr.vercel.app](https://stellr-flow-6rcr.vercel.app/)**
 </div>
@@ -61,6 +62,10 @@
 | Workflow Builder |
 |:---:|
 | ![Workflow Builder](screenshots/5-workflow-builder.png) |
+
+| 📱 Mobile Responsive |
+|:---:|
+| ![Mobile View](screenshots/7-mobile-view.png) |
 
 ---
 
