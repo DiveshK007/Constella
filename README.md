@@ -189,7 +189,7 @@ Every execution is logged on the Stellar blockchain. Click **"View on Explorer"*
 | Technology | Purpose |
 |-----------|---------|
 | [Soroban](https://soroban.stellar.org/) | Smart contract platform |
-| Rust + soroban-sdk v20 | Contract development |
+| Rust + soroban-sdk v22 | Contract development |
 
 ---
 
@@ -276,16 +276,25 @@ npm run dev
 
 The **WorkflowRegistry** contract (`contracts/workflow_registry/`) logs every workflow execution immutably on the Stellar blockchain.
 
+### ✅ Deployed on Stellar Testnet
+
+| Item | Value |
+|------|-------|
+| **Contract ID** | `CBATLCK3E5SDUWTGS6SGB7NSDL6KF4EG7DTRI2KIX5TWNQVZSNUYIUMO` |
+| **Deploy TX** | [`3f720889...`](https://stellar.expert/explorer/testnet/tx/3f720889cfb00778ae1b157e710c0be2c1037b1c014574ebcadf675daefcf777) |
+| **Sample Invoke TX** | [`b97ff370...`](https://stellar.expert/explorer/testnet/tx/b97ff3707796a533a022f52f56822627faf56a448e4d41c870187e09f0ab991a) |
+| **View on Explorer** | [StellarExpert](https://stellar.expert/explorer/testnet/contract/CBATLCK3E5SDUWTGS6SGB7NSDL6KF4EG7DTRI2KIX5TWNQVZSNUYIUMO) • [Stellar Lab](https://lab.stellar.org/r/testnet/contract/CBATLCK3E5SDUWTGS6SGB7NSDL6KF4EG7DTRI2KIX5TWNQVZSNUYIUMO) |
+
 ### Contract Functions
 
 ```rust
 // Log a workflow execution
-log_execution(env, user, workflow_id, status) → execution_id
+log_execution(env, executor, workflow_id, node_count, success) → execution_id
 
 // Query executions
-get_execution(env, execution_id) → ExecutionLog
+get_execution(env, execution_id) → WorkflowExecution
 get_count(env) → u64
-get_recent(env, limit) → Vec<ExecutionLog>
+get_recent(env, limit) → Vec<WorkflowExecution>
 ```
 
 ### Deploy to Testnet
@@ -294,10 +303,18 @@ get_recent(env, limit) → Vec<ExecutionLog>
 cd contracts/workflow_registry
 stellar contract build
 stellar contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/workflow_registry.wasm \
+  --wasm target/wasm32v1-none/release/workflow_registry.wasm \
   --source alice \
   --network testnet
 ```
+
+### ⚠️ Error Handling (3 types documented)
+
+| # | Error Type | Where | How It's Handled |
+|---|-----------|-------|-----------------|
+| 1 | **Wallet not found** | `executeWalletIntegration()` | Detects when Freighter is not installed, prompts user to install |
+| 2 | **Transaction rejected** | `sendXLM()` | Catches user rejection during wallet signing, shows error message |
+| 3 | **Insufficient balance** | `executeTelegramSend()` | Validates balance < required XLM before tx, returns descriptive error |
 
 ---
 
