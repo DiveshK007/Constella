@@ -348,6 +348,8 @@ cd bots/telegram-stellar
 npx jest --config jest.config.cjs
 ```
 
+![Test Output — 52 Passing](screenshots/6-test-output.png)
+
 ---
 
 ## 📁 Project Structure
