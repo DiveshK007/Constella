@@ -527,6 +527,16 @@ Based on user feedback collected via Google Form:
 
 ---
 
+## 📋 User Feedback
+
+**Google Form:** [Submit Feedback](https://forms.gle/gEFaZV9n891Mwrg7A)
+
+Collecting: Name, Email, Wallet Address, Product Rating (1-5)
+
+**Responses Export:** *(Excel sheet will be linked here after collection)*
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
