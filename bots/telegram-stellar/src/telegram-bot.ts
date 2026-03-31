@@ -77,6 +77,34 @@ const activeSessions = new Map<string, {
 }>();
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Metrics Tracking
+// ═══════════════════════════════════════════════════════════════════════════
+const metrics = {
+  startedAt: new Date(),
+  totalRequests: 0,
+  totalWalletsCreated: 0,
+  totalTransactions: 0,
+  totalCommands: 0,
+  dailyActiveUsers: new Set<string>(),
+  lastDayReset: new Date(),
+  commandCounts: {} as Record<string, number>,
+  requestLog: [] as { timestamp: string; method: string; path: string }[],
+};
+
+function trackCommand(command: string, chatId: string) {
+  metrics.totalCommands++;
+  metrics.commandCounts[command] = (metrics.commandCounts[command] || 0) + 1;
+  metrics.dailyActiveUsers.add(chatId);
+
+  // Reset daily users at midnight
+  const now = new Date();
+  if (now.getDate() !== metrics.lastDayReset.getDate()) {
+    metrics.dailyActiveUsers.clear();
+    metrics.lastDayReset = now;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Persistent Wallet Storage (JSON file-based)
 // ═══════════════════════════════════════════════════════════════════════════
 import * as fs from 'fs';
@@ -437,6 +465,7 @@ function initBot() {
   // Create wallet (only for Telegram wallet)
   bot.onText(/\/createwallet/, async (msg) => {
     const chatId = msg.chat.id.toString();
+    trackCommand('createwallet', chatId);
 
     // Check if user already has a wallet
     if (userWallets.has(chatId)) {
@@ -457,6 +486,7 @@ function initBot() {
     const secretKey = keypair.secret();
 
     // Store wallet
+    metrics.totalWalletsCreated++;
     userWallets.set(chatId, {
       publicKey,
       secretKey,
@@ -1227,7 +1257,12 @@ app.use(cors());
 app.use(express.json());
 
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  metrics.totalRequests++;
+  const timestamp = new Date().toISOString();
+  console.log(`${timestamp} - ${req.method} ${req.url}`);
+  metrics.requestLog.push({ timestamp, method: req.method, path: req.url });
+  // Keep only last 100 requests
+  if (metrics.requestLog.length > 100) metrics.requestLog.shift();
   next();
 });
 
@@ -1963,15 +1998,118 @@ app.get("/api/anchor/history/:chatId", (req, res) => {
 });
 
 app.get("/api/telegram/health", (_req, res) => {
+  const uptime = Math.floor((Date.now() - metrics.startedAt.getTime()) / 1000);
   res.json({
     status: "ok",
     service: "stellrflow-telegram-stellar",
     network: STELLAR_NETWORK,
+    uptime: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${uptime % 60}s`,
     activeSessions: activeSessions.size,
     freighterWallets: freighterWallets.size,
     telegramWallets: userWallets.size,
+    totalRequests: metrics.totalRequests,
     timestamp: new Date().toISOString(),
   });
+});
+
+// ============ METRICS & MONITORING ============
+
+app.get("/api/metrics", (_req, res) => {
+  const uptime = Math.floor((Date.now() - metrics.startedAt.getTime()) / 1000);
+  res.json({
+    success: true,
+    uptime: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${uptime % 60}s`,
+    users: {
+      totalTelegramWallets: userWallets.size,
+      totalFreighterWallets: freighterWallets.size,
+      totalUsers: userWallets.size + freighterWallets.size,
+      dailyActiveUsers: metrics.dailyActiveUsers.size,
+    },
+    activity: {
+      totalRequests: metrics.totalRequests,
+      totalCommands: metrics.totalCommands,
+      totalWalletsCreated: metrics.totalWalletsCreated,
+      totalTransactions: metrics.totalTransactions,
+      commandBreakdown: metrics.commandCounts,
+    },
+    system: {
+      network: STELLAR_NETWORK,
+      activeSessions: activeSessions.size,
+      autoPayActive: autoPaySchedules.size,
+      startedAt: metrics.startedAt.toISOString(),
+    },
+    recentRequests: metrics.requestLog.slice(-20),
+  });
+});
+
+// GET /api/users/addresses — List all wallet addresses (for Level 6 proof)
+app.get("/api/users/addresses", (_req, res) => {
+  const addresses: { type: string; chatId: string; publicKey: string; createdAt: string }[] = [];
+
+  userWallets.forEach((wallet, chatId) => {
+    addresses.push({
+      type: "telegram",
+      chatId,
+      publicKey: wallet.publicKey,
+      createdAt: wallet.createdAt.toISOString(),
+    });
+  });
+
+  freighterWallets.forEach((wallet, chatId) => {
+    addresses.push({
+      type: "freighter",
+      chatId,
+      publicKey: wallet.publicKey,
+      createdAt: wallet.connectedAt.toISOString(),
+    });
+  });
+
+  res.json({
+    success: true,
+    total: addresses.length,
+    addresses,
+  });
+});
+
+// POST /api/transaction/fee-bump — Fee sponsorship (gasless tx)
+app.post("/api/transaction/fee-bump", async (req, res) => {
+  try {
+    const { innerTxXdr } = req.body;
+    if (!innerTxXdr) {
+      return res.status(400).json({ success: false, error: "innerTxXdr required" });
+    }
+
+    if (!STELLAR_SECRET_KEY) {
+      return res.status(500).json({ success: false, error: "Fee sponsor key not configured" });
+    }
+
+    const sponsorKeypair = Keypair.fromSecret(STELLAR_SECRET_KEY);
+    const networkPassphrase = STELLAR_NETWORK === "testnet" ? Networks.TESTNET : Networks.PUBLIC;
+
+    // Build fee bump transaction
+    const innerTx = TransactionBuilder.fromXDR(innerTxXdr, networkPassphrase);
+    const feeBumpTx = TransactionBuilder.buildFeeBumpTransaction(
+      sponsorKeypair,
+      BASE_FEE,
+      innerTx as any,
+      networkPassphrase
+    );
+    feeBumpTx.sign(sponsorKeypair);
+
+    // Submit
+    const result = await horizon.submitTransaction(feeBumpTx);
+    metrics.totalTransactions++;
+
+    res.json({
+      success: true,
+      hash: (result as any).hash,
+      feeSponsor: sponsorKeypair.publicKey(),
+      message: "Transaction fee sponsored by StellrFlow",
+    });
+  } catch (err: any) {
+    console.error("Fee bump error:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ============ AUTOPAY SCHEDULER (In-Memory for Hackathon) ============

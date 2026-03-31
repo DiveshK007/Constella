@@ -444,6 +444,89 @@ We welcome contributions! Whether it's bug fixes, new features, or documentation
 
 ---
 
+## 🔒 Security
+
+Full security checklist: **[SECURITY.md](SECURITY.md)**
+
+Key measures:
+- ✅ No private keys in source code — all secrets in `.env`
+- ✅ Freighter wallet signs locally — keys never leave the extension
+- ✅ `require_auth()` on all Soroban state-changing functions
+- ✅ Input validation on all API endpoints
+- ✅ HTTPS enforced via Vercel deployment
+
+---
+
+## 📊 Metrics & Monitoring
+
+**Live Dashboard:** [stellr-flow-6rcr.vercel.app/metrics](https://stellr-flow-6rcr.vercel.app/metrics)
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/metrics` | Full metrics JSON (users, DAU, requests, commands) |
+| `GET /api/telegram/health` | Health check with uptime |
+| `GET /api/users/addresses` | List all wallet addresses |
+
+---
+
+## ⚡ Advanced Features
+
+### 1. Fee Sponsorship (Gasless Transactions)
+Users can submit transactions with fees paid by StellrFlow via fee bump:
+```
+POST /api/transaction/fee-bump
+Body: { "innerTxXdr": "<base64 XDR>" }
+```
+This wraps the user's transaction in a fee bump, allowing gasless UX.
+
+### 2. Multi-Signature Approval
+Threshold-based multi-party approval flows:
+```
+POST /api/multisig/create — Create multisig config
+GET  /api/multisig/:chatId — View configs
+```
+
+### 3. SEP-24 Anchor Integration (Fiat On/Off Ramp)
+Simulated anchor for USD, EUR, INR, GBP:
+```
+POST /api/anchor/deposit  — Fiat → XLM
+POST /api/anchor/withdraw — XLM → Fiat
+GET  /api/anchor/rates     — Exchange rates
+```
+
+---
+
+## 📈 Data Indexing
+
+Wallet and transaction data is indexed via the bot API:
+
+| Endpoint | Data |
+|----------|------|
+| `GET /api/users/addresses` | All wallet public keys with timestamps |
+| `GET /api/metrics` | Aggregated user/transaction/command metrics |
+| `GET /api/anchor/history/:chatId` | Anchor deposit/withdrawal history |
+| `GET /api/autopay/:chatId` | Scheduled payment data |
+
+---
+
+## 🗺️ Improvement Roadmap
+
+Based on user feedback collected via Google Form:
+
+| Phase | Improvement | Status |
+|-------|------------|--------|
+| v1.1 | Add wallet connect button to navbar | ✅ Done |
+| v1.1 | Auto-redirect after wallet connection | ✅ Done |
+| v1.2 | Metrics dashboard with real-time data | ✅ Done |
+| v1.2 | Fee sponsorship for gasless transactions | ✅ Done |
+| v1.3 | Security checklist + monitoring endpoints | ✅ Done |
+| v2.0 | Persistent database (PostgreSQL) | 🔜 Planned |
+| v2.0 | JWT authentication for API | 🔜 Planned |
+| v2.1 | Mainnet deployment | 🔜 Planned |
+| v2.1 | Mobile app (React Native) | 🔜 Planned |
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
