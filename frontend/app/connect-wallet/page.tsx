@@ -102,6 +102,11 @@ export default function ConnectWalletPage() {
                   console.log("Could not get network:", e);
                 }
                 await registerWalletWithBackend(addressResult.address, network);
+
+                // Auto-redirect after 3 seconds
+                setTimeout(() => {
+                  window.location.href = "/";
+                }, 3000);
               }
             } catch (e) {
               console.log("Could not get address:", e);
@@ -157,7 +162,7 @@ export default function ConnectWalletPage() {
 
       // Auto-redirect to dashboard after 3 seconds
       setTimeout(() => {
-        router.push("/");
+        window.location.href = "/";
       }, 3000);
     } catch (err: any) {
       console.error("Wallet connection error:", err);
@@ -223,7 +228,7 @@ export default function ConnectWalletPage() {
                 Redirecting to dashboard in 3 seconds...
               </p>
               <Button
-                onClick={() => router.push("/")}
+                onClick={() => window.location.href = "/"}
                 className="w-full"
               >
                 Go to Dashboard →
