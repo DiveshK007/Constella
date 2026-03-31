@@ -12,7 +12,8 @@ import {
   Settings,
   PanelLeft,
   PanelRight,
-  Workflow
+  Workflow,
+  Wallet
 } from "lucide-react";
 import { toast } from "sonner";
 import { useWorkflowStore } from "@/lib/stores/workflow-store";
@@ -62,6 +63,17 @@ export function NavBar() {
       </div>
 
       <div className="flex items-center space-x-2">
+        <Link href="/connect-wallet">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-primary/50 hover:bg-primary/10 text-primary"
+          >
+            <Wallet className="h-4 w-4" />
+            Connect Wallet
+          </Button>
+        </Link>
+
         <Button
           variant="outline"
           size="icon"
