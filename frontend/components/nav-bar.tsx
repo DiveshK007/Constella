@@ -22,19 +22,21 @@ export function NavBar() {
   const [leftPanelOpen, setLeftPanelOpen] = useState(true);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
 
-  const { saveWorkflow, loadWorkflow } = useWorkflowStore();
+  const { saveWorkflow, loadWorkflow, startWorkflow, isWorkflowRunning } = useWorkflowStore();
 
   const handleSave = () => {
     saveWorkflow();
     toast.success("Workflow saved successfully");
   };
 
-  const handleRun = () => {
-    toast.success("Workflow execution started");
-    // Simulation of workflow execution
-    setTimeout(() => {
-      toast.success("Workflow executed successfully");
-    }, 2000);
+  const handleRun = async () => {
+    toast.info("▶️ Workflow execution started...");
+    try {
+      await startWorkflow();
+      toast.success("✅ Workflow executed successfully!");
+    } catch (err: any) {
+      toast.error(`❌ Workflow failed: ${err.message}`);
+    }
   };
 
   const toggleLeftPanel = () => {
@@ -71,6 +73,17 @@ export function NavBar() {
           >
             <Wallet className="h-4 w-4" />
             Connect Wallet
+          </Button>
+        </Link>
+
+        <Link href="/metrics">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-muted-foreground/50 hover:bg-muted"
+          >
+            <Settings className="h-4 w-4" />
+            Metrics
           </Button>
         </Link>
 
