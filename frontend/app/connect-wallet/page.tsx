@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
@@ -18,6 +18,7 @@ const STELLAR_BOT_URL = process.env.NEXT_PUBLIC_STELLAR_BOT_URL || "http://local
 
 export default function ConnectWalletPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const chatId = searchParams.get("chatId");
 
   const [status, setStatus] = useState<"idle" | "connecting" | "connected" | "error">("idle");
@@ -153,6 +154,11 @@ export default function ConnectWalletPage() {
 
       // Register with backend and notify Telegram
       await registerWalletWithBackend(accessResult.address, network);
+
+      // Auto-redirect to dashboard after 3 seconds
+      setTimeout(() => {
+        router.push("/");
+      }, 3000);
     } catch (err: any) {
       console.error("Wallet connection error:", err);
       setError(err.message || "Failed to connect wallet. Please try again.");
@@ -213,9 +219,18 @@ export default function ConnectWalletPage() {
                   </p>
                 </div>
               </div>
+              <p className="text-sm text-center text-muted-foreground">
+                Redirecting to dashboard in 3 seconds...
+              </p>
+              <Button
+                onClick={() => router.push("/")}
+                className="w-full"
+              >
+                Go to Dashboard →
+              </Button>
               {chatId && (
                 <p className="text-sm text-center text-muted-foreground">
-                  ✅ Telegram notified! You can close this page and return to Telegram.
+                  ✅ Telegram notified! You can also return to Telegram.
                 </p>
               )}
             </div>
