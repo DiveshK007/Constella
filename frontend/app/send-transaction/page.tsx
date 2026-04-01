@@ -136,9 +136,9 @@ export default function SendTransactionPage() {
           body: JSON.stringify({ chatId, message }),
         });
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Transaction error:", err);
-      setError(err.message || "Transaction failed");
+      setError(err instanceof Error ? err.message : "Transaction failed");
       setStatus("error");
 
       // Notify Telegram of failure
@@ -148,7 +148,7 @@ export default function SendTransactionPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             chatId,
-            message: `❌ Transaction failed: ${err.message || "Unknown error"}`,
+            message: `❌ Transaction failed: ${err instanceof Error ? err.message : "Unknown error"}`,
           }),
         });
       }

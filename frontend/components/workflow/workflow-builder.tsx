@@ -13,7 +13,7 @@ import {
 import { Background } from "@reactflow/background";
 import { Controls } from "@reactflow/controls";
 import { MiniMap } from "@reactflow/minimap";
-import { useWorkflowStore } from "@/lib/stores/workflow-store";
+import { useWorkflowStore, WorkflowNode, WorkflowEdge } from "@/lib/stores/workflow-store";
 import { NodeTypesSidebar } from "./node-types-sidebar";
 import { PropertiesPanel } from "./properties-panel";
 import { CustomNode } from "./nodes/custom-node";
@@ -24,6 +24,18 @@ import "@reactflow/core/dist/style.css";
 const nodeTypes = {
     customNode: CustomNode,
 };
+
+/** Check if viewport is mobile-sized */
+function useIsMobile(breakpoint = 768) {
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth < breakpoint);
+        check();
+        window.addEventListener("resize", check);
+        return () => window.removeEventListener("resize", check);
+    }, [breakpoint]);
+    return isMobile;
+}
 
 function WorkflowCanvas() {
     const {
@@ -43,11 +55,24 @@ function WorkflowCanvas() {
 
     const reactFlowInstance = useReactFlow();
     const reactFlowWrapper = useRef<HTMLDivElement>(null);
+    const isMobile = useIsMobile();
 
+    // Default panels hidden on mobile, visible on desktop
     const [leftPanelVisible, setLeftPanelVisible] = useState(true);
     const [rightPanelVisible, setRightPanelVisible] = useState(true);
 
-    // Handle panel toggling
+    // Auto-collapse panels on mobile
+    useEffect(() => {
+        if (isMobile) {
+            setLeftPanelVisible(false);
+            setRightPanelVisible(false);
+        } else {
+            setLeftPanelVisible(true);
+            setRightPanelVisible(true);
+        }
+    }, [isMobile]);
+
+    // Handle panel toggling from NavBar
     useEffect(() => {
         const handleToggleLeftPanel = (e: CustomEvent) => {
             setLeftPanelVisible(e.detail);
@@ -98,15 +123,20 @@ function WorkflowCanvas() {
     );
 
     const onNodeClick = useCallback(
-        (_: React.MouseEvent, node: any) => {
+        (_: React.MouseEvent, node: WorkflowNode) => {
             setSelectedNode(node);
             setSelectedEdge(null);
+            // On mobile, auto-open properties panel when a node is selected
+            if (isMobile) {
+                setRightPanelVisible(true);
+                setLeftPanelVisible(false);
+            }
         },
-        [setSelectedNode, setSelectedEdge]
+        [setSelectedNode, setSelectedEdge, isMobile]
     );
 
     const onEdgeClick = useCallback(
-        (_: React.MouseEvent, edge: any) => {
+        (_: React.MouseEvent, edge: WorkflowEdge) => {
             setSelectedEdge(edge);
             setSelectedNode(null);
         },
@@ -149,7 +179,12 @@ function WorkflowCanvas() {
     const onPaneClick = useCallback(() => {
         setSelectedNode(null);
         setSelectedEdge(null);
-    }, [setSelectedNode, setSelectedEdge]);
+        // On mobile, close panels when tapping canvas
+        if (isMobile) {
+            setLeftPanelVisible(false);
+            setRightPanelVisible(false);
+        }
+    }, [setSelectedNode, setSelectedEdge, isMobile]);
 
     const handleStartWorkflow = useCallback(() => {
         startWorkflow();
@@ -167,9 +202,25 @@ function WorkflowCanvas() {
         loadWorkflow();
     }, [loadWorkflow]);
 
+    // Mobile overlay panel styles
+    const mobilePanelBase = "fixed top-0 bottom-0 z-40 shadow-2xl transition-transform duration-200";
+
     return (
-        <div ref={reactFlowWrapper} className="h-full w-full flex">
-            {leftPanelVisible && <NodeTypesSidebar />}
+        <div ref={reactFlowWrapper} className="h-full w-full flex relative">
+            {/* Left sidebar — overlay on mobile, inline on desktop */}
+            {leftPanelVisible && (
+                <>
+                    {isMobile && (
+                        <div
+                            className="fixed inset-0 bg-black/40 z-30"
+                            onClick={() => setLeftPanelVisible(false)}
+                        />
+                    )}
+                    <div className={isMobile ? `${mobilePanelBase} left-0 w-72` : ""}>
+                        <NodeTypesSidebar />
+                    </div>
+                </>
+            )}
 
             <div
                 className="flex-1 h-full"
@@ -199,31 +250,55 @@ function WorkflowCanvas() {
                     }}
                 >
                     <Controls position="bottom-right" className="m-3" />
-                    <MiniMap
-                        nodeStrokeWidth={3}
-                        zoomable
-                        pannable
-                        className="bg-card border border-border rounded-md"
-                        nodeBorderRadius={8}
-                    />
+                    {!isMobile && (
+                        <MiniMap
+                            nodeStrokeWidth={3}
+                            zoomable
+                            pannable
+                            className="bg-card border border-border rounded-md"
+                            nodeBorderRadius={8}
+                        />
+                    )}
                     <Background
                         color="hsl(var(--muted-foreground))"
                         gap={16}
                         size={1}
                     />
-                    <Panel
-                        position="top-center"
-                        className="p-1 px-2 bg-card rounded-md border border-border text-sm shadow-md"
-                    >
-                        Click nodes to connect them. Drag from sidebar to add
-                        new nodes.
-                    </Panel>
 
-                    <Panel position="top-right" className="m-3 flex gap-2">
+                    {nodes.length === 0 && (
+                        <Panel
+                            position="top-center"
+                            className="mt-16 p-6 bg-card rounded-xl border border-border shadow-lg text-center max-w-xs"
+                        >
+                            <div className="mx-auto rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-3">
+                                <Play className="h-5 w-5 text-primary" />
+                            </div>
+                            <h3 className="font-semibold text-base mb-1">Get started</h3>
+                            <p className="text-sm text-muted-foreground">
+                                {isMobile
+                                    ? "Tap the menu and open Nodes to add workflow steps."
+                                    : "Drag nodes from the left sidebar to build your workflow."}
+                            </p>
+                        </Panel>
+                    )}
+
+                    {nodes.length > 0 && (
+                        <Panel
+                            position="top-center"
+                            className="p-1 px-2 bg-card rounded-md border border-border text-xs md:text-sm shadow-md"
+                        >
+                            {isMobile
+                                ? "Tap a node to configure it"
+                                : "Click nodes to connect them. Drag from sidebar to add new nodes."}
+                        </Panel>
+                    )}
+
+                    <Panel position="top-right" className="m-2 md:m-3 flex gap-1 md:gap-2">
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={handleSaveWorkflow}
+                            aria-label="Save workflow"
                             title="Save Workflow"
                         >
                             <Save className="h-4 w-4" />
@@ -232,6 +307,7 @@ function WorkflowCanvas() {
                             variant="outline"
                             size="sm"
                             onClick={handleLoadWorkflow}
+                            aria-label="Load workflow"
                             title="Load Workflow"
                         >
                             <Download className="h-4 w-4" />
@@ -241,6 +317,7 @@ function WorkflowCanvas() {
                                 variant="destructive"
                                 size="sm"
                                 onClick={handleStopWorkflow}
+                                aria-label="Stop workflow"
                                 title="Stop Workflow"
                             >
                                 <Square className="h-4 w-4" />
@@ -250,6 +327,7 @@ function WorkflowCanvas() {
                                 variant="default"
                                 size="sm"
                                 onClick={handleStartWorkflow}
+                                aria-label="Start workflow"
                                 title="Start Workflow"
                             >
                                 <Play className="h-4 w-4" />
@@ -259,7 +337,20 @@ function WorkflowCanvas() {
                 </ReactFlow>
             </div>
 
-            {rightPanelVisible && <PropertiesPanel />}
+            {/* Right sidebar — overlay on mobile, inline on desktop */}
+            {rightPanelVisible && (
+                <>
+                    {isMobile && (
+                        <div
+                            className="fixed inset-0 bg-black/40 z-30"
+                            onClick={() => setRightPanelVisible(false)}
+                        />
+                    )}
+                    <div className={isMobile ? `${mobilePanelBase} right-0 w-72` : ""}>
+                        <PropertiesPanel />
+                    </div>
+                </>
+            )}
         </div>
     );
 }

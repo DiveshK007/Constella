@@ -56,7 +56,7 @@ export default function MetricsPage() {
         setMetrics(data);
         setError(null);
       }
-    } catch (err: any) {
+    } catch (err) {
       setError("Bot API unreachable. Make sure the bot is running on port 3003.");
     }
     setLoading(false);
@@ -69,29 +69,29 @@ export default function MetricsPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-background p-6">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <main className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 md:gap-4 min-w-0">
             <Link href="/">
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" aria-label="Back to workflow builder">
                 <ArrowLeft className="h-4 w-4" />
               </Button>
             </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-primary flex items-center gap-2">
-                <BarChart3 className="h-8 w-8" />
-                Metrics Dashboard
+            <div className="min-w-0">
+              <h1 className="text-xl md:text-3xl font-bold text-primary flex items-center gap-2">
+                <BarChart3 className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0" />
+                <span className="truncate">Metrics</span>
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs md:text-sm text-muted-foreground">
                 Real-time monitoring for StellrFlow
               </p>
             </div>
           </div>
-          <Button onClick={fetchMetrics} variant="outline" className="gap-2">
+          <Button onClick={fetchMetrics} variant="outline" size="sm" className="gap-2 flex-shrink-0" aria-label="Refresh metrics">
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </Button>
         </div>
 
@@ -289,8 +289,9 @@ export default function MetricsPage() {
         )}
 
         {!metrics && !error && (
-          <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center justify-center h-64 gap-3">
             <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground" role="status" aria-live="polite">Loading metrics...</p>
           </div>
         )}
       </div>

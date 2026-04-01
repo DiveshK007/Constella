@@ -164,9 +164,9 @@ export default function ConnectWalletPage() {
       setTimeout(() => {
         window.location.href = "/";
       }, 3000);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Wallet connection error:", err);
-      setError(err.message || "Failed to connect wallet. Please try again.");
+      setError(err instanceof Error ? err.message : "Failed to connect wallet. Please try again.");
       setStatus("error");
     }
   };

@@ -53,7 +53,7 @@ export function DraggableNodeItem({ type, label, icon, description }: DraggableN
           <span>{label}</span>
         </div>
       </HoverCardTrigger>
-      <HoverCardContent className="w-64 p-4">
+      <HoverCardContent className="w-56 md:w-64 p-3 md:p-4">
         <div className="space-y-2">
           <div className="flex items-center">
             <div className="mr-2 text-primary">{icon}</div>

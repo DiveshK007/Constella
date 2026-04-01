@@ -12,10 +12,33 @@
 import TelegramBot from "node-telegram-bot-api";
 import express from "express";
 import cors from "cors";
+import {
+  generalLimiter,
+  corsOptions,
+} from "./middleware/security.js";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
-import { Horizon, Networks, Keypair, TransactionBuilder, Operation, Asset, BASE_FEE } from "@stellar/stellar-sdk";
+import { Networks, Keypair, TransactionBuilder, Operation, Asset, BASE_FEE } from "@stellar/stellar-sdk";
+
+// Shared state and route modules
+import {
+  STELLAR_NETWORK as _NET,
+  HORIZON_URL,
+  STELLAR_SECRET_KEY as _SECRET,
+  ANCHOR_TREASURY_SECRET as _ANCHOR_SECRET,
+  horizon,
+  userWallets,
+  freighterWallets,
+  activeSessions,
+  userChatIds,
+  metrics,
+  trackCommand,
+  loadWallets,
+  saveWallets,
+  getWallet,
+} from "./state.js";
+import { mountRoutes } from "./routes/index.js";
 
 // Anchor module — on/off ramp + Stellar helpers
 import {
@@ -41,26 +64,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
-// Configuration
+// Configuration (state re-exports: STELLAR_NETWORK, HORIZON_URL, STELLAR_SECRET_KEY, ANCHOR_TREASURY_SECRET)
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 const PORT = parseInt(process.env.PORT || "3003", 10);
-const STELLAR_NETWORK = process.env.STELLAR_NETWORK || "testnet";
-const RPC_URL =
-  process.env.STELLAR_RPC_URL ||
-  (STELLAR_NETWORK === "testnet"
-    ? "https://soroban-testnet.stellar.org"
-    : "https://soroban-mainnet.stellar.org");
-const HORIZON_URL =
-  process.env.HORIZON_URL ||
-  (STELLAR_NETWORK === "testnet"
-    ? "https://horizon-testnet.stellar.org"
-    : "https://horizon.stellar.org");
-
-// Optional: Stellar secret key for /send (bot-funded payments)
-const STELLAR_SECRET_KEY = process.env.STELLAR_SECRET_KEY || "";
-
-// Anchor Treasury: funded wallet for real XLM credits on deposit
-const ANCHOR_TREASURY_SECRET = process.env.ANCHOR_TREASURY_SECRET || "";
+const STELLAR_NETWORK = _NET;
+const STELLAR_SECRET_KEY = _SECRET;
+const ANCHOR_TREASURY_SECRET = _ANCHOR_SECRET;
 
 if (!TELEGRAM_BOT_TOKEN) {
   console.error("TELEGRAM_BOT_TOKEN is not defined in .env");
@@ -68,133 +77,9 @@ if (!TELEGRAM_BOT_TOKEN) {
 }
 
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
-const userChatIds = new Map<string, string>();
 
-// Session management - tracks which features are enabled for each chat
-const activeSessions = new Map<string, {
-  features: string[];
-  registeredAt: Date;
-}>();
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Metrics Tracking
-// ═══════════════════════════════════════════════════════════════════════════
-const metrics = {
-  startedAt: new Date(),
-  totalRequests: 0,
-  totalWalletsCreated: 0,
-  totalTransactions: 0,
-  totalCommands: 0,
-  dailyActiveUsers: new Set<string>(),
-  lastDayReset: new Date(),
-  commandCounts: {} as Record<string, number>,
-  requestLog: [] as { timestamp: string; method: string; path: string }[],
-};
-
-function trackCommand(command: string, chatId: string) {
-  metrics.totalCommands++;
-  metrics.commandCounts[command] = (metrics.commandCounts[command] || 0) + 1;
-  metrics.dailyActiveUsers.add(chatId);
-
-  // Reset daily users at midnight
-  const now = new Date();
-  if (now.getDate() !== metrics.lastDayReset.getDate()) {
-    metrics.dailyActiveUsers.clear();
-    metrics.lastDayReset = now;
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// Persistent Wallet Storage (JSON file-based)
-// ═══════════════════════════════════════════════════════════════════════════
-import * as fs from 'fs';
-
-const WALLETS_FILE = path.join(__dirname, '../data/wallets.json');
-
-interface WalletData {
-  telegramWallets: Record<string, { publicKey: string; secretKey: string; createdAt: string }>;
-  freighterWallets: Record<string, { publicKey: string; network: string; connectedAt: string }>;
-}
-
-// Ensure data directory exists
-const dataDir = path.dirname(WALLETS_FILE);
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
-
-// Load wallets from disk
-function loadWallets(): WalletData {
-  try {
-    if (fs.existsSync(WALLETS_FILE)) {
-      const data = fs.readFileSync(WALLETS_FILE, 'utf-8');
-      return JSON.parse(data);
-    }
-  } catch (err) {
-    console.error('Failed to load wallets:', err);
-  }
-  return { telegramWallets: {}, freighterWallets: {} };
-}
-
-// Save wallets to disk
-function saveWallets(): void {
-  try {
-    const data: WalletData = {
-      telegramWallets: Object.fromEntries(
-        Array.from(userWallets.entries()).map(([k, v]) => [k, {
-          publicKey: v.publicKey,
-          secretKey: v.secretKey,
-          createdAt: v.createdAt.toISOString(),
-        }])
-      ),
-      freighterWallets: Object.fromEntries(
-        Array.from(freighterWallets.entries()).map(([k, v]) => [k, {
-          publicKey: v.publicKey,
-          network: v.network,
-          connectedAt: v.connectedAt.toISOString(),
-        }])
-      ),
-    };
-    fs.writeFileSync(WALLETS_FILE, JSON.stringify(data, null, 2));
-    console.log(`Wallets saved to ${WALLETS_FILE}`);
-  } catch (err) {
-    console.error('Failed to save wallets:', err);
-  }
-}
-
-// Telegram Wallet storage (persistent)
-const userWallets = new Map<string, {
-  publicKey: string;
-  secretKey: string;
-  createdAt: Date;
-}>();
-
-// Freighter Wallet storage (persistent)
-const freighterWallets = new Map<string, {
-  publicKey: string;
-  network: string;
-  connectedAt: Date;
-}>();
-
-// Initialize wallets from disk on startup
-const savedWallets = loadWallets();
-for (const [chatId, wallet] of Object.entries(savedWallets.telegramWallets)) {
-  userWallets.set(chatId, {
-    publicKey: wallet.publicKey,
-    secretKey: wallet.secretKey,
-    createdAt: new Date(wallet.createdAt),
-  });
-}
-for (const [chatId, wallet] of Object.entries(savedWallets.freighterWallets)) {
-  freighterWallets.set(chatId, {
-    publicKey: wallet.publicKey,
-    network: wallet.network,
-    connectedAt: new Date(wallet.connectedAt),
-  });
-}
-console.log(`Loaded ${userWallets.size} Telegram wallets, ${freighterWallets.size} Freighter wallets from disk`);
-
-// Stellar Horizon client (for balance queries)
-const horizon = new Horizon.Server(HORIZON_URL);
+// Load persisted wallets from disk via shared state module
+loadWallets();
 
 function initBot() {
   console.log("Initializing StellrFlow Telegram Bot (Stellar)...");
@@ -1253,8 +1138,9 @@ async function sendNotification(
 
 // Express API
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.use(cors(corsOptions()));
+app.use(express.json({ limit: "1mb" }));
+app.use(generalLimiter);
 
 app.use((req, res, next) => {
   metrics.totalRequests++;
@@ -1266,8 +1152,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Send Telegram message (called by frontend / workflow)
-app.post("/api/telegram/send", async (req, res) => {
+// ─── Mount modular API routes ─────────────────────────────────────────────
+mountRoutes(app, sendNotification);
+
+// Legacy inline routes removed — all API endpoints now served from ./routes/
+
+/**** REMOVED INLINE ROUTES — replaced by mountRoutes() above ****
+app.post("/api/telegram/send", validate(schemas.sendMessage), async (req, res) => {
   try {
     const { chatId, message, parseMode, disableNotification } = req.body;
     console.log(`Sending message to ${chatId} with parseMode: ${parseMode}`);
@@ -1330,7 +1221,7 @@ app.get("/api/stellar/balance/:address", async (req, res) => {
 });
 
 // Session registration - called by frontend when workflow starts
-app.post("/api/session/register", (req, res) => {
+app.post("/api/session/register", authLimiter, validate(schemas.sessionRegister), (req, res) => {
   try {
     const { chatId, features } = req.body;
 
@@ -1396,7 +1287,7 @@ app.delete("/api/session/:chatId", (req, res) => {
 // === TELEGRAM WALLET API ENDPOINTS ===
 
 // Create wallet for a chat
-app.post("/api/wallet/create", (req, res) => {
+app.post("/api/wallet/create", authLimiter, validate(schemas.createWallet), (req, res) => {
   try {
     const { chatId } = req.body;
 
@@ -1557,7 +1448,7 @@ app.post("/api/wallet/:chatId/fund", async (req, res) => {
 });
 
 // Send XLM from wallet
-app.post("/api/wallet/:chatId/send", async (req, res) => {
+app.post("/api/wallet/:chatId/send", walletLimiter, validate(schemas.sendXLM), async (req, res) => {
   try {
     const { chatId } = req.params;
     const { destination, amount } = req.body;
@@ -1661,7 +1552,7 @@ app.post("/api/wallet/:chatId/send", async (req, res) => {
 // === FREIGHTER WALLET API ENDPOINTS ===
 
 // Register/Connect Freighter wallet for a chat
-app.post("/api/freighter/connect", (req, res) => {
+app.post("/api/freighter/connect", authLimiter, validate(schemas.freighterConnect), (req, res) => {
   try {
     const { chatId, publicKey, network } = req.body;
 
@@ -1793,7 +1684,7 @@ app.delete("/api/freighter/:chatId", (req, res) => {
 // === TRANSACTION API ENDPOINTS (for Freighter signing) ===
 
 // Build unsigned transaction XDR (for Freighter to sign)
-app.post("/api/transaction/build", async (req, res) => {
+app.post("/api/transaction/build", walletLimiter, validate(schemas.buildTransaction), async (req, res) => {
   try {
     const { sourceAddress, destination, amount, network } = req.body;
 
@@ -1880,7 +1771,7 @@ app.post("/api/transaction/build", async (req, res) => {
 });
 
 // Submit signed transaction
-app.post("/api/transaction/submit", async (req, res) => {
+app.post("/api/transaction/submit", walletLimiter, validate(schemas.submitTransaction), async (req, res) => {
   try {
     const { signedXdr, chatId } = req.body;
 
@@ -1916,7 +1807,7 @@ app.post("/api/transaction/submit", async (req, res) => {
 // These let the frontend workflow builder trigger on/off ramp flows via REST.
 
 // POST /api/anchor/deposit — Trigger deposit (on-ramp)
-app.post("/api/anchor/deposit", async (req, res) => {
+app.post("/api/anchor/deposit", walletLimiter, validate(schemas.anchorDeposit), async (req, res) => {
   try {
     const { chatId, amount, currency } = req.body;
     if (!chatId || !amount) {
@@ -1948,7 +1839,7 @@ app.post("/api/anchor/deposit", async (req, res) => {
 });
 
 // POST /api/anchor/withdraw — Trigger withdrawal (off-ramp)
-app.post("/api/anchor/withdraw", async (req, res) => {
+app.post("/api/anchor/withdraw", walletLimiter, validate(schemas.anchorWithdraw), async (req, res) => {
   try {
     const { chatId, xlmAmount, currency } = req.body;
     if (!chatId || !xlmAmount) {
@@ -2014,7 +1905,7 @@ app.get("/api/telegram/health", (_req, res) => {
 
 // ============ METRICS & MONITORING ============
 
-app.get("/api/metrics", (_req, res) => {
+app.get("/api/metrics", requireApiKey, (_req, res) => {
   const uptime = Math.floor((Date.now() - metrics.startedAt.getTime()) / 1000);
   res.json({
     success: true,
@@ -2042,8 +1933,8 @@ app.get("/api/metrics", (_req, res) => {
   });
 });
 
-// GET /api/users/addresses — List all wallet addresses (for Level 6 proof)
-app.get("/api/users/addresses", (_req, res) => {
+// GET /api/users/addresses — List all wallet addresses (admin only)
+app.get("/api/users/addresses", requireApiKey, (_req, res) => {
   const addresses: { type: string; chatId: string; publicKey: string; createdAt: string }[] = [];
 
   userWallets.forEach((wallet, chatId) => {
@@ -2072,7 +1963,7 @@ app.get("/api/users/addresses", (_req, res) => {
 });
 
 // POST /api/transaction/fee-bump — Fee sponsorship (gasless tx)
-app.post("/api/transaction/fee-bump", async (req, res) => {
+app.post("/api/transaction/fee-bump", walletLimiter, validate(schemas.feeBump), async (req, res) => {
   try {
     const { innerTxXdr } = req.body;
     if (!innerTxXdr) {
@@ -2130,7 +2021,7 @@ const autoPaySchedules = new Map<string, AutoPaySchedule>();
 let scheduleCounter = 1;
 
 // POST /api/autopay/create — Create scheduled payment
-app.post("/api/autopay/create", (req, res) => {
+app.post("/api/autopay/create", walletLimiter, validate(schemas.createAutoPay), (req, res) => {
   try {
     const { chatId, destination, amount, interval, duration } = req.body;
 
@@ -2243,7 +2134,7 @@ const pendingApprovals = new Map<string, PendingApproval>();
 let multisigCounter = 1;
 
 // POST /api/multisig/create — Configure multisig
-app.post("/api/multisig/create", (req, res) => {
+app.post("/api/multisig/create", walletLimiter, validate(schemas.createMultisig), (req, res) => {
   try {
     const { chatId, threshold, signers, timeout } = req.body;
 
@@ -2299,10 +2190,34 @@ app.get("/api/multisig/:chatId", (req, res) => {
     .filter(c => c.chatId === chatId);
   return res.json({ success: true, configs });
 });
+****/
 
 initBot();
 
-app.listen(PORT, () => {
-  console.log(`StellrFlow Telegram Bot API running on port ${PORT}`);
-  console.log(`Stellar network: ${STELLAR_NETWORK}`);
-});
+// ─── Startup Health Check ────────────────────────────────────────────────────
+
+async function checkHorizonConnectivity(): Promise<void> {
+  try {
+    const response = await fetch(`${HORIZON_URL}/`);
+    if (response.ok) {
+      console.log(`Horizon connectivity: OK (${HORIZON_URL})`);
+    } else {
+      console.warn(`Horizon responded with status ${response.status} — some features may not work`);
+    }
+  } catch (err) {
+    console.error(`WARNING: Cannot reach Horizon at ${HORIZON_URL} — blockchain operations will fail`);
+    console.error("  Ensure the Stellar network is accessible from this environment");
+  }
+}
+
+async function startup() {
+  await checkHorizonConnectivity();
+
+  app.listen(PORT, () => {
+    console.log(`StellrFlow Telegram Bot API running on port ${PORT}`);
+    console.log(`Stellar network: ${STELLAR_NETWORK}`);
+    console.log(`Routes: modular (./routes)`);
+  });
+}
+
+startup();

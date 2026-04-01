@@ -1,10 +1,56 @@
 // API service for StellrFlow - Stellar Telegram bot integration
-// No AO/Arweave dependencies
 
 const STELLAR_BOT_URL =
   (typeof process !== "undefined" &&
-    (process as any).env?.NEXT_PUBLIC_STELLAR_BOT_URL) ||
+    process.env?.NEXT_PUBLIC_STELLAR_BOT_URL) ||
   "http://localhost:3003";
+
+// ─── Response Types ─────────────────────────────────────────────────────────
+
+interface ApiResponse {
+  success: boolean;
+  error?: string;
+}
+
+interface BalanceResponse extends ApiResponse {
+  balance?: string;
+  address?: string;
+}
+
+interface WalletResponse extends ApiResponse {
+  publicKey?: string;
+  message?: string;
+  isNew?: boolean;
+  xlmBalance?: string;
+  otherBalances?: Array<{ asset: string; balance: string; issuer?: string }>;
+  network?: string;
+}
+
+interface TxResponse extends ApiResponse {
+  hash?: string;
+  explorerUrl?: string;
+}
+
+interface NodeConfig {
+  [key: string]: string | number | boolean | string[];
+}
+
+interface ExecutionInput {
+  [key: string]: unknown;
+}
+
+/** Safely extract a string from a config field */
+function cfgStr(config: NodeConfig, key: string): string {
+  const val = config[key];
+  return typeof val === "string" ? val : val != null ? String(val) : "";
+}
+
+/** Safely extract a string from an execution input field */
+function inputStr(input: ExecutionInput | undefined, key: string): string {
+  if (!input) return "";
+  const val = input[key];
+  return typeof val === "string" ? val : val != null ? String(val) : "";
+}
 
 let isBotActive = false;
 
@@ -240,8 +286,8 @@ export const telegramWalletApi = {
 export const nodeExecutors = {
   // Execute Telegram trigger - registers session and sends initial connection message
   // Connected blocks will send their own detailed messages
-  executeTelegramConnect: async (config: any, connectedNodeTypes: string[] = []) => {
-    const chatId = config.chatId?.trim();
+  executeTelegramConnect: async (config: NodeConfig, connectedNodeTypes: string[] = []) => {
+    const chatId = cfgStr(config, "chatId").trim();
     if (!chatId) {
       throw new Error("Telegram Chat ID is required. Send /register to the bot to get yours.");
     }
@@ -293,19 +339,21 @@ export const nodeExecutors = {
     return { success: true, chatId, features, message: "Connected successfully" };
   },
 
-  executeTelegramSend: async (config: any, inputData?: any) => {
-    const chatId = config.chatId || inputData?.chatId || "";
-    let message = config.message || "";
+  executeTelegramSend: async (config: NodeConfig, inputData?: ExecutionInput) => {
+    const chatId = String(config.chatId || "") || inputStr(inputData, "chatId");
+    let message = String(config.message || "");
 
     if (!chatId) {
       throw new Error("Telegram Chat ID is required");
     }
 
-    if (inputData?.balance) {
-      message = message.replace(/\{balance\}/g, String(inputData.balance));
+    const balance = inputStr(inputData, "balance");
+    if (balance) {
+      message = message.replace(/\{balance\}/g, balance);
     }
-    if (inputData?.address) {
-      message = message.replace(/\{address\}/g, String(inputData.address));
+    const address = inputStr(inputData, "address");
+    if (address) {
+      message = message.replace(/\{address\}/g, address);
     }
 
     const result = await stellarApi.sendTelegram(chatId, message || "Notification from StellrFlow");
@@ -317,16 +365,15 @@ export const nodeExecutors = {
     return { success: true, sentTo: chatId, message, inputData };
   },
 
-  executeStellarSDK: async (config: any, inputData?: any) => {
-    const operation = config.operation || "chatbot";
-    const chatId = inputData?.chatId;
+  executeStellarSDK: async (config: NodeConfig, inputData?: ExecutionInput) => {
+    const operation = String(config.operation || "chatbot");
+    const chatId = inputStr(inputData, "chatId");
 
     if (!chatId) {
       throw new Error("Chat ID required. Connect this block to a Telegram trigger first.");
     }
 
     if (operation === "chatbot") {
-      // Send chatbot activation message to user
       const message =
         `🤖 **Stellar AI Chatbot Activated!**\n\n` +
         `I can now answer your questions about Stellar!\n\n` +
@@ -351,7 +398,7 @@ export const nodeExecutors = {
     }
 
     const destination =
-      config.destination || inputData?.destination || inputData?.address || "";
+      String(config.destination || "") || inputStr(inputData, "destination") || inputStr(inputData, "address");
     if (!destination) {
       throw new Error("Stellar address is required for balance check");
     }
@@ -366,7 +413,7 @@ export const nodeExecutors = {
       `💰 **Balance Check**\n\n` +
       `**Address:** \`${destination.slice(0, 8)}...${destination.slice(-8)}\`\n` +
       `**Balance:** ${result.balance} XLM\n\n` +
-      `Network: ${config.network || "testnet"}`;
+      `Network: ${cfgStr(config, "network") || "testnet"}`;
 
     await telegramApi.sendMessage(chatId, balanceMessage);
 
@@ -375,19 +422,19 @@ export const nodeExecutors = {
       operation: "balance",
       address: result.address || destination,
       balance: result.balance,
-      network: config.network || "testnet",
+      network: cfgStr(config, "network") || "testnet",
       chatId,
     };
   },
 
-  executeWalletIntegration: async (config: any, inputData?: any) => {
-    const chatId = inputData?.chatId || config.chatId;
+  executeWalletIntegration: async (config: NodeConfig, inputData?: ExecutionInput) => {
+    const chatId = inputStr(inputData, "chatId") || String(config.chatId || "");
     if (!chatId) {
       throw new Error("Connect this block to a Telegram trigger first.");
     }
 
-    const walletProvider = config.walletProvider || "freighter";
-    const network = config.network || "testnet";
+    const walletProvider = cfgStr(config, "walletProvider") || "freighter";
+    const network = cfgStr(config, "network") || "testnet";
 
     if (walletProvider === "telegram") {
       // Telegram Wallet - create an in-bot wallet
@@ -459,8 +506,8 @@ export const nodeExecutors = {
   },
 
   // NEW: Get wallet balance - for Telegram wallet (uses stored wallet address, NOT SDK balance)
-  executeWalletBalance: async (config: any, inputData?: any) => {
-    const chatId = inputData?.chatId || config.chatId;
+  executeWalletBalance: async (config: NodeConfig, inputData?: ExecutionInput) => {
+    const chatId = inputStr(inputData, "chatId") || String(config.chatId || "");
     if (!chatId) {
       throw new Error("Chat ID is required. Connect to a Telegram trigger first.");
     }
@@ -477,7 +524,7 @@ export const nodeExecutors = {
       `💰 **Your Wallet Balance**\n\n` +
       `**XLM:** ${result.xlmBalance}\n` +
       (result.otherBalances?.length > 0
-        ? `\n**Other Assets:**\n${result.otherBalances.map((b: any) => `• ${b.balance} ${b.asset}`).join('\n')}\n`
+        ? `\n**Other Assets:**\n${result.otherBalances.map((b: { balance: string; asset: string }) => `• ${b.balance} ${b.asset}`).join('\n')}\n`
         : "") +
       `\nAddress: \`${result.publicKey?.slice(0, 8)}...${result.publicKey?.slice(-8)}\`\n` +
       `Network: ${result.network}`;
@@ -495,14 +542,14 @@ export const nodeExecutors = {
   },
 
   // Execute Anchor On-Ramp (Fiat → XLM)
-  executeAnchorOnRamp: async (config: any, inputData?: any) => {
-    const chatId = inputData?.chatId || config.chatId;
+  executeAnchorOnRamp: async (config: NodeConfig, inputData?: ExecutionInput) => {
+    const chatId = inputStr(inputData, "chatId") || String(config.chatId || "");
     if (!chatId) {
       throw new Error("Chat ID is required. Connect to a Telegram trigger first.");
     }
 
-    const amount = parseFloat(config.amount) || 100;
-    const currency = config.fiatCurrency || "USD";
+    const amount = parseFloat(cfgStr(config, "amount")) || 100;
+    const currency = cfgStr(config, "fiatCurrency") || "USD";
 
     // Call backend anchor deposit endpoint
     const response = await fetch(`${STELLAR_BOT_URL}/api/anchor/deposit`, {
@@ -543,14 +590,14 @@ export const nodeExecutors = {
   },
 
   // Execute Anchor Off-Ramp (XLM → Fiat)
-  executeAnchorOffRamp: async (config: any, inputData?: any) => {
-    const chatId = inputData?.chatId || config.chatId;
+  executeAnchorOffRamp: async (config: NodeConfig, inputData?: ExecutionInput) => {
+    const chatId = inputStr(inputData, "chatId") || String(config.chatId || "");
     if (!chatId) {
       throw new Error("Chat ID is required. Connect to a Telegram trigger first.");
     }
 
-    const xlmAmount = parseFloat(config.amount) || 10;
-    const currency = config.fiatCurrency || "USD";
+    const xlmAmount = parseFloat(cfgStr(config, "amount")) || 10;
+    const currency = cfgStr(config, "fiatCurrency") || "USD";
 
     // Call backend anchor withdrawal endpoint
     const response = await fetch(`${STELLAR_BOT_URL}/api/anchor/withdraw`, {
@@ -592,16 +639,16 @@ export const nodeExecutors = {
   },
 
   // Execute AutoPay Setup (Recurring Payments)
-  executeAutoPay: async (config: any, inputData?: any) => {
-    const chatId = inputData?.chatId || config.chatId;
+  executeAutoPay: async (config: NodeConfig, inputData?: ExecutionInput) => {
+    const chatId = inputStr(inputData, "chatId") || String(config.chatId || "");
     if (!chatId) {
       throw new Error("Chat ID is required. Connect to a Telegram trigger first.");
     }
 
-    const destination = config.destination?.trim();
-    const amount = parseFloat(config.amount) || 10;
-    const interval = config.interval || "daily";
-    const duration = parseInt(config.duration) || 30;
+    const destination = cfgStr(config, "destination").trim();
+    const amount = parseFloat(cfgStr(config, "amount")) || 10;
+    const interval = cfgStr(config, "interval") || "daily";
+    const duration = parseInt(cfgStr(config, "duration")) || 30;
 
     if (!destination) {
       throw new Error("Destination address is required for AutoPay");
@@ -653,15 +700,15 @@ export const nodeExecutors = {
   },
 
   // Execute Multisig Setup (Multi-approval)
-  executeMultisig: async (config: any, inputData?: any) => {
-    const chatId = inputData?.chatId || config.chatId;
+  executeMultisig: async (config: NodeConfig, inputData?: ExecutionInput) => {
+    const chatId = inputStr(inputData, "chatId") || String(config.chatId || "");
     if (!chatId) {
       throw new Error("Chat ID is required. Connect to a Telegram trigger first.");
     }
 
-    const threshold = parseInt(config.threshold) || 2;
-    const signers = config.signers || [];
-    const timeout = parseInt(config.timeout) || 24;
+    const threshold = parseInt(cfgStr(config, "threshold")) || 2;
+    const signers = Array.isArray(config.signers) ? config.signers : [];
+    const timeout = parseInt(cfgStr(config, "timeout")) || 24;
 
     if (signers.length < threshold) {
       throw new Error(`Need at least ${threshold} signers configured`);
