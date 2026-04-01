@@ -34,8 +34,9 @@ export function NavBar() {
     try {
       await startWorkflow();
       toast.success("✅ Workflow executed successfully!");
-    } catch (err: any) {
-      toast.error(`❌ Workflow failed: ${err.message}`);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Workflow failed: ${msg}`);
     }
   };
 

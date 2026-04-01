@@ -56,7 +56,7 @@ export default function MetricsPage() {
         setMetrics(data);
         setError(null);
       }
-    } catch (err: any) {
+    } catch (err) {
       setError("Bot API unreachable. Make sure the bot is running on port 3003.");
     }
     setLoading(false);

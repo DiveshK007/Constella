@@ -11,41 +11,47 @@ import {
   Position,
 } from "@reactflow/core";
 import "@reactflow/core/dist/style.css";
+import { toast } from "sonner";
 
-export type Node<T = any> = any;
-export type Edge<T = any> = any;
-export type NodeChange = any;
-export type EdgeChange = any;
+export type NodeConfig = Record<string, string | number | boolean | string[]>;
 
 export type NodeData = {
   label: string;
   type: string;
   icon: string;
   description: string;
-  config: Record<string, any>;
+  config: NodeConfig;
 };
 
+export type WorkflowNode = ReactFlowNode<NodeData>;
+export type WorkflowEdge = ReactFlowEdge;
+
+export interface NodeExecutionResult {
+  success: boolean;
+  [key: string]: unknown;
+}
+
 type WorkflowState = {
-  nodes: Node<NodeData>[];
-  edges: Edge[];
-  selectedNode: Node<NodeData> | null;
-  selectedEdge: Edge | null;
+  nodes: WorkflowNode[];
+  edges: WorkflowEdge[];
+  selectedNode: WorkflowNode | null;
+  selectedEdge: WorkflowEdge | null;
   isWorkflowRunning: boolean;
   nodeExecutionState: Record<
     string,
     "pending" | "running" | "success" | "error"
   >;
-  nodeResults: Record<string, any>;
+  nodeResults: Record<string, NodeExecutionResult>;
 
-  setNodes: (nodes: Node<NodeData>[]) => void;
-  onNodesChange: (changes: NodeChange[]) => void;
+  setNodes: (nodes: WorkflowNode[]) => void;
+  onNodesChange: (changes: ReactFlowNodeChange[]) => void;
   addNode: (nodeType: string, position: XYPosition) => void;
   updateNodeData: (nodeId: string, data: Partial<NodeData>) => void;
   duplicateNode: (nodeId: string) => void;
   deleteNode: (nodeId: string) => void;
 
-  setEdges: (edges: Edge[]) => void;
-  onEdgesChange: (changes: EdgeChange[]) => void;
+  setEdges: (edges: WorkflowEdge[]) => void;
+  onEdgesChange: (changes: ReactFlowEdgeChange[]) => void;
   addEdge: (params: {
     source: string;
     sourceHandle: string | null;
@@ -54,12 +60,12 @@ type WorkflowState = {
   }) => void;
   deleteEdge: (edgeId: string) => void;
 
-  setSelectedNode: (node: Node<NodeData> | null) => void;
-  setSelectedEdge: (edge: Edge | null) => void;
+  setSelectedNode: (node: WorkflowNode | null) => void;
+  setSelectedEdge: (edge: WorkflowEdge | null) => void;
 
   startWorkflow: () => Promise<void>;
   stopWorkflow: () => Promise<void>;
-  executeNode: (nodeId: string, inputData?: any) => Promise<any>;
+  executeNode: (nodeId: string, inputData?: NodeExecutionResult) => Promise<NodeExecutionResult>;
 
   saveWorkflow: () => void;
   loadWorkflow: () => void;
@@ -224,11 +230,32 @@ export const NODE_TYPES = {
   },
 };
 
+/** Safely extract a string value from a NodeConfig field */
+function configStr(config: NodeConfig, key: string): string {
+  const val = config[key];
+  return typeof val === "string" ? val : val != null ? String(val) : "";
+}
+
+/** Safely extract a string from an execution result field */
+function resultStr(result: NodeExecutionResult | undefined, key: string): string {
+  if (!result) return "";
+  const val = result[key];
+  return typeof val === "string" ? val : val != null ? String(val) : "";
+}
+
 export const getNodeDataFromType = (nodeType: string): NodeData | null => {
   for (const category of Object.values(NODE_TYPES)) {
     const item = category.items.find((item) => item.type === nodeType);
     if (item) {
-      return { ...item };
+      return {
+        label: item.label,
+        type: item.type,
+        icon: item.icon,
+        description: item.description,
+        config: Object.fromEntries(
+          Object.entries(item.config).filter(([, v]) => v !== undefined)
+        ) as NodeConfig,
+      };
     }
   }
   return null;
@@ -254,7 +281,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     const nodeData = getNodeDataFromType(nodeType);
     if (!nodeData) return;
 
-    const newNode: Node<NodeData> = {
+    const newNode: WorkflowNode = {
       id: nanoid(),
       type: "customNode",
       position,
@@ -300,7 +327,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     const node = get().nodes.find((n) => n.id === nodeId);
     if (!node) return;
 
-    const newNode: Node<NodeData> = {
+    const newNode: WorkflowNode = {
       ...node,
       id: nanoid(),
       position: {
@@ -346,7 +373,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     );
     if (exists) return;
 
-    const newEdge: Edge = {
+    const newEdge: WorkflowEdge = {
       id: nanoid(),
       ...params,
       type: "smoothstep",
@@ -387,11 +414,14 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       }
     } catch (error) {
       console.error("Error starting workflow:", error);
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Workflow failed: ${msg}`);
       set({ isWorkflowRunning: false });
     }
   },
 
   stopWorkflow: async () => {
+    toast.info("Workflow stopped");
     set({
       isWorkflowRunning: false,
       nodeExecutionState: {},
@@ -415,7 +445,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
         },
       }));
 
-      let result: any = undefined;
+      let result: NodeExecutionResult = { success: false };
       const { nodeExecutors } = await import("@/lib/utils/api-service");
 
       switch (node.data.type) {
@@ -440,8 +470,8 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
             },
           }));
 
-          const chatId = node.data.config.chatId || connectResult.chatId;
-          const payload = { ...connectResult, chatId };
+          const chatId = configStr(node.data.config, "chatId") || resultStr(connectResult, "chatId");
+          const payload: NodeExecutionResult = { ...connectResult, chatId };
 
           // Only execute connected nodes if there are any
           if (connectedNodeIds.length > 0) {
@@ -457,7 +487,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
         case "stellar-sdk": {
           const stellarResult = await nodeExecutors.executeStellarSDK(
             node.data.config,
-            { ...inputData, chatId: inputData?.chatId }
+            { ...inputData, chatId: resultStr(inputData, "chatId") }
           );
 
           set((state) => ({
@@ -470,7 +500,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
 
           const payload = {
             ...stellarResult,
-            chatId: inputData?.chatId,
+            chatId: resultStr(inputData, "chatId"),
             mode: "chatbot",
           };
 
@@ -505,13 +535,13 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
         }
 
         case "telegram-send": {
-          const config = {
+          const sendConfig = {
             ...node.data.config,
-            chatId: node.data.config.chatId || inputData?.chatId,
+            chatId: configStr(node.data.config, "chatId") || resultStr(inputData, "chatId"),
           };
 
           const sendResult = await nodeExecutors.executeTelegramSend(
-            config,
+            sendConfig,
             inputData
           );
 
@@ -534,7 +564,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
         case "autopay": {
           const autopayResult = await nodeExecutors.executeAutoPay(
             node.data.config,
-            { ...inputData, chatId: inputData?.chatId }
+            { ...inputData, chatId: resultStr(inputData, "chatId") }
           );
 
           set((state) => ({
@@ -558,7 +588,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
         case "multisig": {
           const multisigResult = await nodeExecutors.executeMultisig(
             node.data.config,
-            { ...inputData, chatId: inputData?.chatId }
+            { ...inputData, chatId: resultStr(inputData, "chatId") }
           );
 
           set((state) => ({
@@ -580,7 +610,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
         }
 
         case "delay": {
-          const delay = parseInt(node.data.config?.delay || "5", 10) * 1000;
+          const delay = parseInt(configStr(node.data.config, "delay") || "5", 10) * 1000;
           await new Promise((r) => setTimeout(r, delay));
           set((state) => ({
             nodeExecutionState: {
@@ -588,9 +618,9 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
               [nodeId]: "success",
             },
           }));
-          result = { delayed: delay };
+          result = { success: true, delayed: delay };
           for (const edge of edges.filter((e) => e.source === nodeId)) {
-            await get().executeNode(edge.target, { ...inputData, delayed: delay });
+            await get().executeNode(edge.target, { success: true, ...inputData, delayed: delay });
           }
           break;
         }
@@ -661,6 +691,9 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       return result;
     } catch (error) {
       console.error(`Error executing node ${nodeId}:`, error);
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      const node = get().nodes.find((n) => n.id === nodeId);
+      toast.error(`${node?.data.label || "Node"} failed: ${msg}`);
       set((state) => ({
         nodeExecutionState: {
           ...state.nodeExecutionState,

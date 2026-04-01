@@ -13,7 +13,7 @@ import {
 import { Background } from "@reactflow/background";
 import { Controls } from "@reactflow/controls";
 import { MiniMap } from "@reactflow/minimap";
-import { useWorkflowStore } from "@/lib/stores/workflow-store";
+import { useWorkflowStore, WorkflowNode, WorkflowEdge } from "@/lib/stores/workflow-store";
 import { NodeTypesSidebar } from "./node-types-sidebar";
 import { PropertiesPanel } from "./properties-panel";
 import { CustomNode } from "./nodes/custom-node";
@@ -98,7 +98,7 @@ function WorkflowCanvas() {
     );
 
     const onNodeClick = useCallback(
-        (_: React.MouseEvent, node: any) => {
+        (_: React.MouseEvent, node: WorkflowNode) => {
             setSelectedNode(node);
             setSelectedEdge(null);
         },
@@ -106,7 +106,7 @@ function WorkflowCanvas() {
     );
 
     const onEdgeClick = useCallback(
-        (_: React.MouseEvent, edge: any) => {
+        (_: React.MouseEvent, edge: WorkflowEdge) => {
             setSelectedEdge(edge);
             setSelectedNode(null);
         },
