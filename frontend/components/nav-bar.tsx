@@ -13,7 +13,9 @@ import {
   PanelLeft,
   PanelRight,
   Workflow,
-  Wallet
+  Wallet,
+  Menu,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useWorkflowStore } from "@/lib/stores/workflow-store";
@@ -21,6 +23,7 @@ import { useWorkflowStore } from "@/lib/stores/workflow-store";
 export function NavBar() {
   const [leftPanelOpen, setLeftPanelOpen] = useState(true);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { saveWorkflow, loadWorkflow, startWorkflow, isWorkflowRunning } = useWorkflowStore();
 
@@ -51,26 +54,39 @@ export function NavBar() {
   };
 
   return (
-    <nav className="border-b border-border bg-card p-4 flex justify-between items-center z-10">
+    <nav className="border-b border-border bg-card p-3 md:p-4 flex justify-between items-center z-10 relative">
       <div className="flex items-center space-x-2">
         <Link href="/" className="flex items-center">
           <Image
             src="/logo.png"
             alt="StellarFlow Logo"
-            width={38}
-            height={38}
-          // className="mr-2"
+            width={32}
+            height={32}
+            className="md:w-[38px] md:h-[38px]"
           />
-          <span className="text-xl font-semibold text-primary">StellarFlow</span>
+          <span className="text-lg md:text-xl font-semibold text-primary ml-1">StellarFlow</span>
         </Link>
       </div>
 
-      <div className="flex items-center space-x-2">
+      {/* Mobile menu toggle */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="md:hidden"
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+      >
+        {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      </Button>
+
+      {/* Desktop nav items */}
+      <div className="hidden md:flex items-center space-x-2">
         <Link href="/connect-wallet">
           <Button
             variant="outline"
             size="sm"
             className="gap-2 border-primary/50 hover:bg-primary/10 text-primary"
+            aria-label="Connect wallet"
           >
             <Wallet className="h-4 w-4" />
             Connect Wallet
@@ -82,6 +98,7 @@ export function NavBar() {
             variant="outline"
             size="sm"
             className="gap-2 border-muted-foreground/50 hover:bg-muted"
+            aria-label="View metrics dashboard"
           >
             <Settings className="h-4 w-4" />
             Metrics
@@ -93,6 +110,7 @@ export function NavBar() {
           size="icon"
           onClick={toggleLeftPanel}
           className={leftPanelOpen ? "bg-muted" : ""}
+          aria-label="Toggle node sidebar"
           title="Toggle left panel"
         >
           <PanelLeft className="h-4 w-4" />
@@ -103,11 +121,65 @@ export function NavBar() {
           size="icon"
           onClick={toggleRightPanel}
           className={rightPanelOpen ? "bg-muted" : ""}
+          aria-label="Toggle properties panel"
           title="Toggle right panel"
         >
           <PanelRight className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Mobile dropdown menu */}
+      {mobileMenuOpen && (
+        <div className="absolute top-full left-0 right-0 bg-card border-b border-border p-3 flex flex-col gap-2 md:hidden z-50 shadow-lg">
+          <Link href="/connect-wallet" onClick={() => setMobileMenuOpen(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 border-primary/50 hover:bg-primary/10 text-primary justify-start"
+              aria-label="Connect wallet"
+            >
+              <Wallet className="h-4 w-4" />
+              Connect Wallet
+            </Button>
+          </Link>
+
+          <Link href="/metrics" onClick={() => setMobileMenuOpen(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 border-muted-foreground/50 hover:bg-muted justify-start"
+              aria-label="View metrics dashboard"
+            >
+              <Settings className="h-4 w-4" />
+              Metrics
+            </Button>
+          </Link>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { toggleLeftPanel(); setMobileMenuOpen(false); }}
+              className={`flex-1 gap-2 justify-start ${leftPanelOpen ? "bg-muted" : ""}`}
+              aria-label="Toggle node sidebar"
+            >
+              <PanelLeft className="h-4 w-4" />
+              Nodes
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { toggleRightPanel(); setMobileMenuOpen(false); }}
+              className={`flex-1 gap-2 justify-start ${rightPanelOpen ? "bg-muted" : ""}`}
+              aria-label="Toggle properties panel"
+            >
+              <PanelRight className="h-4 w-4" />
+              Properties
+            </Button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

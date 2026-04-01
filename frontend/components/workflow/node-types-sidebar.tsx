@@ -38,7 +38,7 @@ export function NodeTypesSidebar() {
     }, {});
 
     return (
-        <div className="w-64 border-r border-border bg-card flex flex-col">
+        <div className="w-64 md:w-64 h-full border-r border-border bg-card flex flex-col">
             <div className="p-4 border-b border-border">
                 <h2 className="text-lg font-medium mb-2">Workflow Steps</h2>
                 <div className="relative">

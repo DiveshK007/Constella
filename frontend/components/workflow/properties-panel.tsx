@@ -11,6 +11,7 @@ import { Trash2, Copy, Settings, Info, ArrowRight } from 'lucide-react';
 import { useWorkflowStore } from '@/lib/stores/workflow-store';
 import { getIconByName } from '@/lib/utils/icons';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 // Config fields that should use dropdowns
 const DROPDOWN_CONFIGS: Record<string, { options: { value: string; label: string }[] }> = {
@@ -45,7 +46,7 @@ export function PropertiesPanel() {
   } = useWorkflowStore();
 
   return (
-    <div className="w-72 border-l border-border bg-card flex flex-col">
+    <div className="w-72 h-full border-l border-border bg-card flex flex-col">
       <div className="p-4 border-b border-border">
         <h2 className="text-lg font-medium">Properties</h2>
       </div>
@@ -156,7 +157,10 @@ export function PropertiesPanel() {
                     <Button
                       variant="outline"
                       className="flex-1"
-                      onClick={() => duplicateNode(selectedNode.id)}
+                      onClick={() => {
+                        duplicateNode(selectedNode.id);
+                        toast.success(`Duplicated "${selectedNode.data.label}"`);
+                      }}
                     >
                       <Copy className="h-4 w-4 mr-1" />
                       Duplicate
@@ -164,7 +168,12 @@ export function PropertiesPanel() {
                     <Button
                       variant="destructive"
                       className="flex-1"
-                      onClick={() => deleteNode(selectedNode.id)}
+                      onClick={() => {
+                        if (window.confirm(`Delete "${selectedNode.data.label}"? This cannot be undone.`)) {
+                          deleteNode(selectedNode.id);
+                          toast.success("Node deleted");
+                        }
+                      }}
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
                       Delete
@@ -223,7 +232,12 @@ export function PropertiesPanel() {
                   <Button
                     variant="destructive"
                     className="w-full"
-                    onClick={() => deleteEdge(selectedEdge.id)}
+                    onClick={() => {
+                      if (window.confirm("Delete this connection?")) {
+                        deleteEdge(selectedEdge.id);
+                        toast.success("Connection deleted");
+                      }
+                    }}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
                     Delete Connection
