@@ -1,5 +1,5 @@
 "use client";
-
+// v2 — standalone, no bot dependency, all fallbacks pre-populated
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
