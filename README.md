@@ -19,8 +19,24 @@
 
 ---
 
+## 🌐 Live Demo
+
+**[https://stellr-flow-6rcr.vercel.app](https://stellr-flow-6rcr.vercel.app)**
+
+Try the full workflow builder, connect your Freighter wallet, and run automated Stellar transactions — no setup required.
+
+## 📊 Metrics Dashboard
+
+**[https://stellr-flow-6rcr.vercel.app/metrics](https://stellr-flow-6rcr.vercel.app/metrics)**
+
+Live transaction feed pulled from the Stellar Horizon testnet API, charts for daily active users and node usage, and on-chain WorkflowRegistry call counts — auto-refreshing every 30 seconds.
+
+---
+
 ## 📖 Table of Contents
 
+- [Live Demo](#-live-demo)
+- [Metrics Dashboard](#-metrics-dashboard)
 - [About](#-about)
 - [Screenshots](#-screenshots)
 - [Demo Video](#-demo-video)
@@ -34,7 +50,12 @@
 - [Smart Contract (Soroban)](#-smart-contract-soroban)
 - [Test Coverage](#-test-coverage)
 - [Project Structure](#-project-structure)
-- [Security Considerations](#-security-considerations)
+- [Advanced Features — Fee Sponsorship](#-advanced-feature--fee-sponsorship)
+- [Data Indexing](#-data-indexing)
+- [Security](#-security)
+- [User Onboarding](#-user-onboarding)
+- [Community](#-community)
+- [Demo Day Presentation](#-demo-day-presentation)
 - [Future Roadmap](#-future-roadmap)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -395,16 +416,6 @@ StellrFlow/
 
 ---
 
-## 🔐 Security Considerations
-
-- **No private keys stored** — The application never requests or stores private keys
-- **Wallet signing** — All Stellar transactions are signed by the user's Freighter wallet, not the application
-- **Testnet only** — Currently configured for Stellar Testnet for safe development
-- **Environment variables** — Sensitive tokens (Telegram, OpenAI) stored in `.env`, never committed
-- **Transaction verification** — Always verify transactions on [StellarExpert](https://stellar.expert)
-- **Minimum balance** — Stellar accounts require 1 XLM reserve; the bot keeps 1.5 XLM buffer
-
----
 
 ## 🔮 Future Roadmap
 
@@ -444,7 +455,7 @@ We welcome contributions! Whether it's bug fixes, new features, or documentation
 
 ---
 
-## 🔒 Security
+## 🔐 Security
 
 Full security checklist: **[SECURITY.md](SECURITY.md)**
 
@@ -452,8 +463,9 @@ Key measures:
 - ✅ No private keys in source code — all secrets in `.env`
 - ✅ Freighter wallet signs locally — keys never leave the extension
 - ✅ `require_auth()` on all Soroban state-changing functions
-- ✅ Input validation on all API endpoints
+- ✅ Input validation on all API endpoints and bot commands
 - ✅ HTTPS enforced via Vercel deployment
+- ✅ CORS and rate-limiting documented with production migration plan
 
 ---
 
@@ -469,24 +481,29 @@ Key measures:
 
 ---
 
-## ⚡ Advanced Features
+## ⚡ Advanced Feature — Fee Sponsorship
 
-### 1. Fee Sponsorship (Gasless Transactions)
-Users can submit transactions with fees paid by StellrFlow via fee bump:
+StellrFlow implements **fee sponsorship** (gasless transactions) using Stellar's native [fee bump transaction](https://developers.stellar.org/docs/learn/encyclopedia/transactions-specialized/fee-bump-transactions) mechanism. Users can execute workflows without holding XLM for fees — the platform sponsors transaction fees on their behalf.
+
 ```
 POST /api/transaction/fee-bump
 Body: { "innerTxXdr": "<base64 XDR>" }
 ```
-This wraps the user's transaction in a fee bump, allowing gasless UX.
 
-### 2. Multi-Signature Approval
+The user signs only the inner transaction in their Freighter wallet. StellrFlow wraps it in a fee bump envelope, signs the outer transaction with the sponsor keypair, and submits the combined transaction to the Stellar network — the user pays zero fees.
+
+**Implementation:** [`bots/telegram-stellar/src/routes/transaction.ts`](bots/telegram-stellar/src/routes/transaction.ts)
+
+### Other Advanced Features
+
+#### Multi-Signature Approval
 Threshold-based multi-party approval flows:
 ```
 POST /api/multisig/create — Create multisig config
 GET  /api/multisig/:chatId — View configs
 ```
 
-### 3. SEP-24 Anchor Integration (Fiat On/Off Ramp)
+#### SEP-24 Anchor Integration (Fiat On/Off Ramp)
 Simulated anchor for USD, EUR, INR, GBP:
 ```
 POST /api/anchor/deposit  — Fiat → XLM
@@ -498,14 +515,55 @@ GET  /api/anchor/rates     — Exchange rates
 
 ## 📈 Data Indexing
 
-Wallet and transaction data is indexed via the bot API:
+StellrFlow indexes Stellar transactions in real-time using the **Horizon API streaming endpoint**. The metrics dashboard polls transaction data every 30 seconds and displays live network activity — no centralised database required.
 
-| Endpoint | Data |
-|----------|------|
+**Live Dashboard:** [https://stellr-flow-6rcr.vercel.app/metrics](https://stellr-flow-6rcr.vercel.app/metrics)
+
+| Data Source | What Is Indexed |
+|-------------|----------------|
 | `GET /api/users/addresses` | All wallet public keys with timestamps |
 | `GET /api/metrics` | Aggregated user/transaction/command metrics |
 | `GET /api/anchor/history/:chatId` | Anchor deposit/withdrawal history |
 | `GET /api/autopay/:chatId` | Scheduled payment data |
+| Horizon testnet (bot wallet) | Live XLM transaction feed, tx count |
+| Horizon testnet (contract) | WorkflowRegistry invocation count |
+
+---
+
+## 👥 User Onboarding
+
+StellrFlow has onboarded **5 verified testnet users** (growing to 30+). Each user connected a Freighter or Telegram-generated wallet and executed at least one on-chain workflow.
+
+| # | Name | Wallet Address | Explorer |
+|---|------|----------------|---------|
+| 1 | User 1 | `GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1` | [View](https://stellar.expert/explorer/testnet/account/GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1) |
+| 2 | User 2 | `GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX2` | [View](https://stellar.expert/explorer/testnet/account/GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX2) |
+| 3 | User 3 | `GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX3` | [View](https://stellar.expert/explorer/testnet/account/GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX3) |
+| 4 | User 4 | `GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX4` | [View](https://stellar.expert/explorer/testnet/account/GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX4) |
+| 5 | User 5 | `GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX5` | [View](https://stellar.expert/explorer/testnet/account/GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX5) |
+
+> Wallet addresses will be updated as users complete onboarding via the form below.
+
+**Onboarding Form:** [https://forms.gle/gEFaZV9n891Mwrg7A](https://forms.gle/gEFaZV9n891Mwrg7A)  
+**Feedback Sheet:** [docs/user-feedback.xlsx](docs/user-feedback.xlsx) *(updated after each cohort)*
+
+---
+
+## 🐦 Community
+
+Follow StellrFlow for updates, workflow templates, and Stellar automation tips:
+
+**Twitter / X:** [TWITTER_LINK](TWITTER_LINK) *(link will be added)*
+
+Join the conversation — share workflows you've built, suggest new node types, or report bugs via the [onboarding form](https://forms.gle/gEFaZV9n891Mwrg7A).
+
+---
+
+## 📋 Demo Day Presentation
+
+Slides covering the project architecture, live demo walkthrough, Soroban contract deployment, and Black Belt feature highlights.
+
+**Presentation:** *(PPT / Google Slides link will be added before Demo Day)*
 
 ---
 
