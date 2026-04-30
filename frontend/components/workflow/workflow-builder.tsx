@@ -61,15 +61,14 @@ function WorkflowCanvas() {
     const [leftPanelVisible, setLeftPanelVisible] = useState(true);
     const [rightPanelVisible, setRightPanelVisible] = useState(true);
 
-    // Auto-collapse panels on mobile
+    // Auto-collapse panels on mobile — notify NavBar so its highlight stays in sync
     useEffect(() => {
-        if (isMobile) {
-            setLeftPanelVisible(false);
-            setRightPanelVisible(false);
-        } else {
-            setLeftPanelVisible(true);
-            setRightPanelVisible(true);
-        }
+        const left  = !isMobile;
+        const right = !isMobile;
+        setLeftPanelVisible(left);
+        setRightPanelVisible(right);
+        document.dispatchEvent(new CustomEvent("panel-left-changed",  { detail: left }));
+        document.dispatchEvent(new CustomEvent("panel-right-changed", { detail: right }));
     }, [isMobile]);
 
     // Handle panel toggling from NavBar
@@ -130,6 +129,8 @@ function WorkflowCanvas() {
             if (isMobile) {
                 setRightPanelVisible(true);
                 setLeftPanelVisible(false);
+                document.dispatchEvent(new CustomEvent("panel-right-changed", { detail: true }));
+                document.dispatchEvent(new CustomEvent("panel-left-changed",  { detail: false }));
             }
         },
         [setSelectedNode, setSelectedEdge, isMobile]
@@ -183,6 +184,8 @@ function WorkflowCanvas() {
         if (isMobile) {
             setLeftPanelVisible(false);
             setRightPanelVisible(false);
+            document.dispatchEvent(new CustomEvent("panel-left-changed",  { detail: false }));
+            document.dispatchEvent(new CustomEvent("panel-right-changed", { detail: false }));
         }
     }, [setSelectedNode, setSelectedEdge, isMobile]);
 

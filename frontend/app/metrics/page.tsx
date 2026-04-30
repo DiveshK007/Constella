@@ -312,17 +312,17 @@ export default function MetricsPage() {
         </div>
 
         {/* Stat Cards — always rendered with at minimum fallback numbers */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {statCards.map((card) => (
             <Card key={card.title} className="bg-card border-border">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <CardHeader className="pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+                <CardTitle className="text-xs text-muted-foreground flex items-center gap-1.5 leading-tight">
                   {card.icon}
-                  {card.title}
+                  <span className="truncate">{card.title}</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className={`text-3xl font-bold ${card.color}`}>
+              <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
+                <p className={`text-2xl sm:text-3xl font-bold ${card.color}`}>
                   {card.value.toLocaleString()}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1 leading-tight">{card.sub}</p>
@@ -375,9 +375,9 @@ export default function MetricsPage() {
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-border/60 text-muted-foreground">
-                      <th className="text-left py-2 pr-4 font-medium">Tx Hash</th>
-                      <th className="text-left py-2 pr-4 font-medium">Operations</th>
-                      <th className="text-left py-2 pr-4 font-medium">Age</th>
+                      <th className="text-left py-2 pr-3 font-medium">Tx Hash</th>
+                      <th className="text-left py-2 pr-3 font-medium hidden sm:table-cell">Ops</th>
+                      <th className="text-left py-2 pr-3 font-medium hidden sm:table-cell">Age</th>
                       <th className="text-left py-2 font-medium">Status</th>
                     </tr>
                   </thead>
@@ -387,31 +387,33 @@ export default function MetricsPage() {
                         key={tx.hash}
                         className="border-b border-border/30 hover:bg-muted/30 transition-colors"
                       >
-                        <td className="py-2 pr-4">
+                        <td className="py-2 pr-3">
                           <a
                             href={`${STELLAR_EXPERT}/tx/${tx.hash}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="font-mono text-primary hover:underline flex items-center gap-1"
                           >
-                            {truncateHash(tx.hash)}
-                            <ExternalLink className="h-2.5 w-2.5 opacity-60" />
+                            {truncateHash(tx.hash, 6)}
+                            <ExternalLink className="h-2.5 w-2.5 opacity-60 shrink-0" />
                           </a>
                         </td>
-                        <td className="py-2 pr-4 text-foreground">
-                          {tx.operationCount} op{tx.operationCount !== 1 ? "s" : ""}
+                        <td className="py-2 pr-3 text-foreground hidden sm:table-cell">
+                          {tx.operationCount}
                         </td>
-                        <td className="py-2 pr-4 text-muted-foreground">
+                        <td className="py-2 pr-3 text-muted-foreground hidden sm:table-cell">
                           {timeAgo(tx.timestamp)}
                         </td>
                         <td className="py-2">
                           {tx.successful ? (
                             <span className="flex items-center gap-1 text-green-400">
-                              <CheckCircle2 className="h-3.5 w-3.5" /> Success
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              <span className="hidden xs:inline">Success</span>
                             </span>
                           ) : (
                             <span className="flex items-center gap-1 text-red-400">
-                              <XCircle className="h-3.5 w-3.5" /> Failed
+                              <XCircle className="h-3.5 w-3.5" />
+                              <span className="hidden xs:inline">Failed</span>
                             </span>
                           )}
                         </td>
@@ -536,7 +538,7 @@ export default function MetricsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-6 sm:gap-10">
+              <div className="flex gap-4 sm:gap-10 shrink-0">
                 <div className="text-center">
                   <p className="text-3xl font-bold text-yellow-400">
                     {contractCallCount}
@@ -580,12 +582,12 @@ export default function MetricsPage() {
         </Card>
 
         {/* Footer */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs text-muted-foreground pb-2">
           <span>
             Data sourced from Stellar Horizon Testnet · Auto-refreshes every 30s
           </span>
           {lastUpdated && (
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1 shrink-0">
               <Clock className="h-3 w-3" />
               Last updated: {lastUpdated.toLocaleTimeString()}
             </span>

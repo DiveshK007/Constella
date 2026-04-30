@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -21,11 +21,23 @@ import { toast } from "sonner";
 import { useWorkflowStore } from "@/lib/stores/workflow-store";
 
 export function NavBar() {
-  const [leftPanelOpen, setLeftPanelOpen] = useState(true);
-  const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [leftPanelOpen, setLeftPanelOpen] = useState(false);
+  const [rightPanelOpen, setRightPanelOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { saveWorkflow, loadWorkflow, startWorkflow, isWorkflowRunning } = useWorkflowStore();
+
+  // Sync panel highlight state when the canvas changes panel visibility (e.g. on resize)
+  useEffect(() => {
+    const onLeft  = (e: Event) => setLeftPanelOpen((e as CustomEvent).detail);
+    const onRight = (e: Event) => setRightPanelOpen((e as CustomEvent).detail);
+    document.addEventListener("panel-left-changed", onLeft);
+    document.addEventListener("panel-right-changed", onRight);
+    return () => {
+      document.removeEventListener("panel-left-changed", onLeft);
+      document.removeEventListener("panel-right-changed", onRight);
+    };
+  }, []);
 
   const handleSave = () => {
     saveWorkflow();
@@ -44,13 +56,15 @@ export function NavBar() {
   };
 
   const toggleLeftPanel = () => {
-    setLeftPanelOpen(!leftPanelOpen);
-    document.dispatchEvent(new CustomEvent('toggle-left-panel', { detail: !leftPanelOpen }));
+    const next = !leftPanelOpen;
+    setLeftPanelOpen(next);
+    document.dispatchEvent(new CustomEvent('toggle-left-panel', { detail: next }));
   };
 
   const toggleRightPanel = () => {
-    setRightPanelOpen(!rightPanelOpen);
-    document.dispatchEvent(new CustomEvent('toggle-right-panel', { detail: !rightPanelOpen }));
+    const next = !rightPanelOpen;
+    setRightPanelOpen(next);
+    document.dispatchEvent(new CustomEvent('toggle-right-panel', { detail: next }));
   };
 
   return (
