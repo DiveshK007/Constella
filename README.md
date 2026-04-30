@@ -551,7 +551,7 @@ StellrFlow has onboarded **5 verified testnet users**. Each user independently c
 > Replace placeholder addresses with real wallet public keys collected via the onboarding form. Each address should have at least one Horizon-visible transaction confirming real usage.
 
 **Onboarding Form:** [https://forms.gle/gEFaZV9n891Mwrg7A](https://forms.gle/gEFaZV9n891Mwrg7A)  
-**Feedback Sheet:** [docs/user-feedback.xlsx]([docs/user-feedback.xlsx](https://docs.google.com/spreadsheets/d/1UvTgh-4CDv0y96iM_of8Mm3Oe-KQS0PxkSHJTfzdS_o/edit?usp=sharing)) *(updated after each cohort)*
+**Feedback Sheet:** [docs/user-feedback.xlsx](docs/user-feedback.xlsx](https://docs.google.com/spreadsheets/d/1UvTgh-4CDv0y96iM_of8Mm3Oe-KQS0PxkSHJTfzdS_o/edit?usp=sharing) *(updated after each cohort)*
 
 ---
 
@@ -596,7 +596,7 @@ This section documents how specific user feedback translated into concrete produ
 
 Follow StellrFlow for updates, workflow templates, and Stellar automation tips:
 
-**Twitter / X:** [TWITTER_LINK]([TWITTER_LINK](https://x.com/DIVZZZ007/status/2049718903425884315?s=20)) *(link will be added)*
+**Twitter / X:** [TWITTER_LINK](https://x.com/DIVZZZ007/status/2049718903425884315?s=20) *(link will be added)*
 
 Join the conversation — share workflows you've built, suggest new node types, or report bugs via the [onboarding form](https://forms.gle/gEFaZV9n891Mwrg7A).
 
