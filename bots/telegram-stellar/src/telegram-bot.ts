@@ -177,8 +177,8 @@ function initBot() {
     await bot.sendChatAction(chatId, "typing");
     const answer = await answerStellarQuestion(text);
 
-    await bot.sendMessage(chatId, answer, {
-      parse_mode: "Markdown",
+    await bot.sendMessage(chatId, esc(answer), {
+      parse_mode: "HTML",
       reply_to_message_id: msg.message_id
     });
   });
