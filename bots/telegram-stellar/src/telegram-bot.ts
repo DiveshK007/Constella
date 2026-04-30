@@ -55,6 +55,7 @@ import {
   getLogForAddress,
 } from "./anchor/index.js";
 import { answerStellarQuestion } from "./sdk-chatbot.js";
+import QRCode from "qrcode";
 import {
   parseIntervalFormat,
   formatIntervalForDisplay,
@@ -81,26 +82,79 @@ const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
 // Load persisted wallets from disk via shared state module
 loadWallets();
 
+// Escape HTML special chars in dynamic content for parse_mode: "HTML"
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// Format XLM balance: "10000.0000000" → "10,000.00"
+const fmtXLM = (bal: string) => {
+  const n = parseFloat(bal);
+  return isNaN(n) ? bal : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+// Pending send confirmations: chatId → { destAddress, amount, memo }
+const pendingSends = new Map<string, { destAddress: string; amount: number; memo?: string }>();
+
+// Active balance watchers: chatId → intervalId
+const balanceWatchers = new Map<string, ReturnType<typeof setInterval>>();
+
+// Address book: chatId → Map<name, address>
+const addressBook = new Map<string, Map<string, string>>();
+const getContacts = (chatId: string) => {
+  if (!addressBook.has(chatId)) addressBook.set(chatId, new Map());
+  return addressBook.get(chatId)!;
+};
+
 function initBot() {
   console.log("Initializing StellrFlow Telegram Bot (Stellar)...");
 
   bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id.toString();
-    const username = msg.from?.username || "User";
+    const username = msg.from?.username || msg.from?.first_name || "there";
 
     if (msg.from?.id) {
       userChatIds.set(msg.from.id.toString(), chatId);
     }
 
-    bot.sendMessage(
-      chatId,
-      `Hello, ${username}! I'm the StellrFlow Stellar Bot.\n\n` +
-      `**Your Chat ID:** \`${chatId}\`\n` +
-      `_Use this in the workflow Telegram node._\n\n` +
-      `/balance <address> - Check XLM balance\n` +
-      `/help - Show commands`,
-      { parse_mode: "Markdown" }
-    );
+    const hasTelegramWallet = userWallets.has(chatId);
+    const hasFreighterWallet = freighterWallets.has(chatId);
+
+    if (hasTelegramWallet || hasFreighterWallet) {
+      // Returning user — show quick-action keyboard
+      const wallet = (freighterWallets.get(chatId) || userWallets.get(chatId))!;
+      bot.sendMessage(
+        chatId,
+        `👋 Welcome back, <b>${esc(username)}</b>!\n\n` +
+        `<b>Wallet:</b> <code>${esc(wallet.publicKey.slice(0, 8))}...${esc(wallet.publicKey.slice(-8))}</code>\n\n` +
+        `What would you like to do?`,
+        {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "💰 My Balance", callback_data: "check_balance" }, { text: "📤 Send XLM", callback_data: "send_help" }],
+              [{ text: "📋 Tx History", callback_data: "tx_history" }, { text: "❓ Help", callback_data: "show_help" }],
+            ],
+          },
+        }
+      );
+    } else {
+      // New user — guided onboarding
+      bot.sendMessage(
+        chatId,
+        `👋 Hello, <b>${esc(username)}</b>! Welcome to <b>StellrFlow Bot</b>.\n\n` +
+        `I can help you send XLM, check balances, and automate Stellar payments.\n\n` +
+        `<b>Step 1 — Connect a wallet to get started:</b>`,
+        {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "🆕 Create In-Bot Wallet", callback_data: "onboard_create" }],
+              [{ text: "🦊 I have Freighter", callback_data: "onboard_freighter" }],
+              [{ text: "❓ What's the difference?", callback_data: "onboard_explain" }],
+            ],
+          },
+        }
+      );
+    }
   });
 
   // Handle regular messages for Stellar Chatbot
@@ -137,8 +191,8 @@ function initBot() {
       userChatIds.set(msg.from.id.toString(), chatId);
       bot.sendMessage(
         chatId,
-        `Registered! ${username}, your chat ID is: \`${chatId}\``,
-        { parse_mode: "Markdown" }
+        `Registered! ${esc(username)}, your chat ID is: <code>${esc(chatId)}</code>`,
+        { parse_mode: "HTML" }
       );
     }
   });
@@ -149,8 +203,8 @@ function initBot() {
     const hasFreighterWallet = freighterWallets.has(chatId);
     const hasAnyWallet = hasTelegramWallet || hasFreighterWallet;
 
-    let helpText = "**StellrFlow Bot Commands**\n\n" +
-      "**General:**\n" +
+    let helpText = "<b>StellrFlow Bot Commands</b>\n\n" +
+      "<b>General:</b>\n" +
       "/start - Start the bot\n" +
       "/register - Get your chat ID\n" +
       "/status - Check your wallet status\n" +
@@ -162,7 +216,7 @@ function initBot() {
       const walletType = hasFreighterWallet ? "🦊 Freighter" : "📱 Telegram";
       const wallet = hasFreighterWallet ? freighterWallets.get(chatId)! : userWallets.get(chatId)!;
 
-      helpText += `\n**${walletType} Wallet Commands:**\n` +
+      helpText += `\n<b>${walletType} Wallet Commands:</b>\n` +
         "/mybalance - Check your wallet balance\n" +
         "/mywallet - Show your wallet address\n" +
         "/send <address> <amount> - Send XLM\n" +
@@ -173,7 +227,7 @@ function initBot() {
         helpText += "/fundwallet - Get testnet XLM\n";
       }
 
-      helpText += `\n**💰 On/Off Ramp (Anchor):**\n` +
+      helpText += `\n<b>💰 On/Off Ramp (Anchor):</b>\n` +
         "/addfunds <amount> [currency] - Deposit fiat → XLM\n" +
         "/withdraw <xlm> [currency] - Withdraw XLM → fiat\n" +
         "/rates - View demo exchange rates\n" +
@@ -183,12 +237,12 @@ function initBot() {
 
       helpText += `\n_Connected: ${wallet.publicKey.slice(0, 8)}...${wallet.publicKey.slice(-8)}_\n`;
     } else {
-      helpText += "\n**Wallet Options:**\n" +
+      helpText += "\n<b>Wallet Options:</b>\n" +
         "• Connect Freighter via StellrFlow workflow\n" +
         "• Or connect Telegram wallet via workflow\n";
     }
 
-    bot.sendMessage(chatId, helpText, { parse_mode: "Markdown" });
+    bot.sendMessage(chatId, helpText, { parse_mode: "HTML" });
   });
 
   // Status command - shows which wallet is connected
@@ -198,30 +252,30 @@ function initBot() {
     const freighterWallet = freighterWallets.get(chatId);
     const session = activeSessions.get(chatId);
 
-    let statusText = "**📊 Your StellrFlow Status**\n\n";
+    let statusText = "<b>📊 Your StellrFlow Status</b>\n\n";
 
     if (freighterWallet) {
-      statusText += "**🦊 Wallet Type:** Freighter (Browser)\n" +
-        `**Address:** \`${freighterWallet.publicKey.slice(0, 8)}...${freighterWallet.publicKey.slice(-8)}\`\n` +
-        `**Network:** ${freighterWallet.network}\n\n` +
-        "_Use /send to sign transactions via Freighter_\n";
+      statusText += "<b>🦊 Wallet Type:</b> Freighter (Browser)\n" +
+        `<b>Address:</b> <code>${esc(freighterWallet.publicKey.slice(0, 8))}...${esc(freighterWallet.publicKey.slice(-8))}</code>\n` +
+        `<b>Network:</b> ${esc(freighterWallet.network)}\n\n` +
+        "<i>Use /send to sign transactions via Freighter</i>\n";
     } else if (telegramWallet) {
-      statusText += "**📱 Wallet Type:** Telegram (In-Bot)\n" +
-        `**Address:** \`${telegramWallet.publicKey.slice(0, 8)}...${telegramWallet.publicKey.slice(-8)}\`\n\n` +
-        "_Use /send to send XLM directly_\n";
+      statusText += "<b>📱 Wallet Type:</b> Telegram (In-Bot)\n" +
+        `<b>Address:</b> <code>${esc(telegramWallet.publicKey.slice(0, 8))}...${esc(telegramWallet.publicKey.slice(-8))}</code>\n\n` +
+        "<i>Use /send to send XLM directly</i>\n";
     } else {
-      statusText += "**Wallet:** Not connected\n\n" +
+      statusText += "<b>Wallet:</b> Not connected\n\n" +
         "Connect a wallet via StellrFlow workflow:\n" +
         "• Freighter - Use your browser wallet\n" +
         "• Telegram - Create an in-bot wallet\n";
     }
 
     if (session) {
-      statusText += `\n**Session:** Active\n` +
-        `**Features:** ${session.features.join(", ") || "None"}\n`;
+      statusText += `\n<b>Session:</b> Active\n` +
+        `<b>Features:</b> ${session.features.join(", ") || "None"}\n`;
     }
 
-    bot.sendMessage(chatId, statusText, { parse_mode: "Markdown" });
+    bot.sendMessage(chatId, statusText, { parse_mode: "HTML" });
   });
 
   // === UNIFIED WALLET COMMANDS ===
@@ -242,7 +296,7 @@ function initBot() {
         chatId,
         "❌ No wallet connected.\n\n" +
         "Connect a wallet via StellrFlow workflow to use this command.",
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
       return;
     }
@@ -261,23 +315,31 @@ function initBot() {
 
       bot.sendMessage(
         chatId,
-        `${walletType} **Wallet Balance**\n\n` +
-        `**XLM:** ${balance}\n` +
-        (otherBalances ? `\n**Other Assets:**\n${otherBalances}\n` : "") +
-        `\nAddress: \`${wallet.publicKey.slice(0, 8)}...${wallet.publicKey.slice(-8)}\`\n` +
-        `Network: ${network}`,
-        { parse_mode: "Markdown" }
+        `${walletType} <b>Wallet Balance</b>\n\n` +
+        `<b>XLM:</b> ${fmtXLM(balance)}\n` +
+        (otherBalances ? `\n<b>Other Assets:</b>\n${esc(otherBalances)}\n` : "") +
+        `\n<b>Address:</b> <code>${esc(wallet.publicKey.slice(0, 8))}...${esc(wallet.publicKey.slice(-8))}</code>\n` +
+        `Network: ${esc(network)}`,
+        {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [[
+              { text: "📤 Send XLM", callback_data: "send_help" },
+              { text: "🔄 Refresh", callback_data: "refresh_balance" },
+            ]],
+          },
+        }
       );
     } catch (err: any) {
       if (err?.response?.status === 404) {
         bot.sendMessage(
           chatId,
-          `${walletType} **Wallet Balance**\n\n` +
-          `**XLM:** 0 (account not funded)\n\n` +
+          `${walletType} <b>Wallet Balance</b>\n\n` +
+          `<b>XLM:</b> 0.00 (account not funded)\n\n` +
           (telegramWallet && !freighterWallet
             ? `💡 Use /fundwallet to get free testnet XLM.`
             : `💡 Fund your account to activate it on Stellar.`),
-          { parse_mode: "Markdown" }
+          { parse_mode: "HTML" }
         );
       } else {
         bot.sendMessage(chatId, `❌ Error: ${err.message || "Try again later"}`);
@@ -299,7 +361,7 @@ function initBot() {
         chatId,
         "❌ No wallet connected.\n\n" +
         "Connect a wallet via StellrFlow workflow.",
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
       return;
     }
@@ -308,12 +370,40 @@ function initBot() {
 
     bot.sendMessage(
       chatId,
-      `${walletType} **Wallet**\n\n` +
-      `**Address:**\n\`${wallet.publicKey}\`\n\n` +
-      `📋 Copy this address to receive XLM or other Stellar assets.\n` +
-      `Network: ${network}`,
-      { parse_mode: "Markdown" }
+      `${walletType} <b>Wallet</b>\n\n` +
+      `<b>Address:</b>\n<code>${esc(wallet.publicKey)}</code>\n\n` +
+      `📋 Copy this address to receive XLM.\n` +
+      `Network: ${esc(network)}\n\n` +
+      `<i>Use /qrcode to get a scannable QR code.</i>`,
+      { parse_mode: "HTML" }
     );
+  });
+
+  // /qrcode — send wallet address as a QR code image
+  bot.onText(/\/qrcode/, async (msg) => {
+    const chatId = msg.chat.id.toString();
+    const wallet = freighterWallets.get(chatId) || userWallets.get(chatId);
+
+    if (!wallet) {
+      bot.sendMessage(chatId, "❌ No wallet connected. Use /createwallet first.");
+      return;
+    }
+
+    try {
+      const qrBuffer = await QRCode.toBuffer(wallet.publicKey, {
+        type: "png",
+        width: 300,
+        margin: 2,
+        color: { dark: "#000000", light: "#FFFFFF" },
+      });
+
+      await bot.sendPhoto(chatId, qrBuffer, {
+        caption: `📱 <b>Your Stellar Address</b>\n\n<code>${esc(wallet.publicKey)}</code>\n\n<i>Scan to receive XLM payments.</i>`,
+        parse_mode: "HTML",
+      });
+    } catch {
+      bot.sendMessage(chatId, "❌ Could not generate QR code.");
+    }
   });
 
   // Disconnect wallet (works for both wallet types)
@@ -340,7 +430,7 @@ function initBot() {
       chatId,
       `✅ ${walletType} wallet disconnected.\n\n` +
       "You can connect a new wallet via StellrFlow workflow.",
-      { parse_mode: "Markdown" }
+      { parse_mode: "HTML" }
     );
   });
 
@@ -358,9 +448,9 @@ function initBot() {
       bot.sendMessage(
         chatId,
         `👛 You already have a wallet!\n\n` +
-        `**Address:** \`${wallet.publicKey}\`\n\n` +
+        `<b>Address:</b> \`${wallet.publicKey}\`\n\n` +
         `Use /mybalance to check your balance.`,
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
       return;
     }
@@ -380,14 +470,23 @@ function initBot() {
 
     bot.sendMessage(
       chatId,
-      `🎉 **Wallet Created!**\n\n` +
-      `**Your Stellar Address:**\n\`${publicKey}\`\n\n` +
-      `⚠️ **Important:** Your wallet is stored securely. To use it on testnet:\n` +
-      `1. Use /fundwallet to get free testnet XLM\n` +
+      `🎉 <b>Wallet Created!</b>\n\n` +
+      `<b>Your Stellar Address:</b>\n<code>${esc(publicKey)}</code>\n\n` +
+      `⚠️ <b>Important:</b> Your wallet is stored securely. To use it on testnet:\n` +
+      `1. Tap <b>Fund Wallet</b> below to get free testnet XLM\n` +
       `2. Or send XLM to your address from another wallet\n\n` +
       `Use /mybalance to check your balance anytime.`,
-      { parse_mode: "Markdown" }
+      {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "🚀 Fund Wallet", callback_data: "fund_wallet" },
+            { text: "💰 Check Balance", callback_data: "check_balance" },
+          ]],
+        },
+      }
     );
+    showMainKeyboard(chatId, "✅ Wallet ready — quick actions pinned below:");
   });
 
   // Fund wallet with testnet XLM (Telegram wallet only)
@@ -400,10 +499,10 @@ function initBot() {
     if (freighterWallet && !wallet) {
       bot.sendMessage(
         chatId,
-        "ℹ️ You're using a **Freighter wallet**.\n\n" +
+        "ℹ️ You're using a <b>Freighter wallet</b>.\n\n" +
         "Fund your Freighter wallet through an exchange or another wallet.\n" +
         "This command only works for Telegram in-bot wallets.",
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
       return;
     }
@@ -412,7 +511,7 @@ function initBot() {
       bot.sendMessage(
         chatId,
         "❌ No wallet connected. Connect one via StellrFlow workflow.",
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
       return;
     }
@@ -421,7 +520,7 @@ function initBot() {
       bot.sendMessage(
         chatId,
         "❌ Funding is only available on testnet. You're on mainnet.",
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
       return;
     }
@@ -436,23 +535,30 @@ function initBot() {
       if (response.ok) {
         bot.sendMessage(
           chatId,
-          `✅ **Wallet Funded!**\n\n` +
-          `Your wallet has been credited with 10,000 testnet XLM.\n\n` +
-          `Use /mybalance to see your balance.`,
-          { parse_mode: "Markdown" }
+          `✅ <b>Wallet Funded!</b>\n\n` +
+          `Your wallet has been credited with <b>10,000 testnet XLM</b>.\n\n` +
+          `Ready to send? Use: <code>/send ADDRESS AMOUNT</code>`,
+          {
+            parse_mode: "HTML",
+            reply_markup: {
+              inline_keyboard: [[
+                { text: "💰 Check Balance", callback_data: "check_balance" },
+                { text: "📤 Send XLM", callback_data: "send_help" },
+              ]],
+            },
+          }
         );
       } else {
         bot.sendMessage(
           chatId,
-          `❌ Failed to fund wallet. It might already be funded or friendbot is busy. Try again later.`,
-          { parse_mode: "Markdown" }
+          `❌ Failed to fund wallet. It might already be funded or Friendbot is busy. Try again in a minute.`
         );
       }
     } catch (err: any) {
       bot.sendMessage(
         chatId,
         `❌ Error: ${err.message || "Failed to fund wallet"}`,
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
     }
   });
@@ -474,7 +580,7 @@ function initBot() {
         chatId,
         "❌ No wallet connected.\n\n" +
         "Connect a wallet first via StellrFlow workflow, then use /addfunds.",
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
       return;
     }
@@ -489,18 +595,18 @@ function initBot() {
 
       bot.sendMessage(
         chatId,
-        "💰 **Add Funds (Deposit)**\n\n" +
+        "💰 <b>Add Funds (Deposit)</b>\n\n" +
         "Convert fiat to XLM and credit your wallet.\n\n" +
-        "**Usage:** `/addfunds <amount> [currency]`\n\n" +
-        "**Examples:**\n" +
+        "<b>Usage:</b> `/addfunds <amount> [currency]`\n\n" +
+        "<b>Examples:</b>\n" +
         "• `/addfunds 100` - Deposit $100\n" +
         "• `/addfunds 100 USD` - Deposit $100\n" +
         "• `/addfunds 1000 INR` - Deposit ₹1000\n\n" +
-        "**Current Rates (Demo):**\n" +
+        "<b>Current Rates (Demo):</b>\n" +
         `• 1 USD = ${usdRate.rate} XLM\n` +
         `• 1 INR = ${inrRate.rate} XLM\n\n` +
         "_Supported: USD, EUR, INR_",
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
       return;
     }
@@ -517,11 +623,11 @@ function initBot() {
 
       bot.sendMessage(
         chatId,
-        `⏳ **Processing Deposit...**\n\n` +
-        `**Amount:** ${amount} ${currency}\n` +
-        `**Est. XLM:** ~${estimate.estimatedXLM.toFixed(4)} XLM\n` +
-        `**Rate:** 1 ${currency} = ${estimate.rate} XLM`,
-        { parse_mode: "Markdown" }
+        `⏳ <b>Processing Deposit...</b>\n\n` +
+        `<b>Amount:</b> ${amount} ${currency}\n` +
+        `<b>Est. XLM:</b> ~${estimate.estimatedXLM.toFixed(4)} XLM\n` +
+        `<b>Rate:</b> 1 ${currency} = ${estimate.rate} XLM`,
+        { parse_mode: "HTML" }
       );
 
       // Create and auto-confirm deposit (hackathon demo mode)
@@ -530,27 +636,27 @@ function initBot() {
       if (result.success) {
         bot.sendMessage(
           chatId,
-          `✅ **Deposit Successful!**\n\n` +
-          `**Deposited:** ${amount} ${currency}\n` +
-          `**Credited:** ${result.creditedXLM.toFixed(4)} XLM\n` +
-          `**Deposit ID:** \`${result.depositId}\`\n` +
-          (result.stellarTxHash ? `**Tx:** \`${result.stellarTxHash.slice(0, 12)}...\`\n` : '') +
+          `✅ <b>Deposit Successful!</b>\n\n` +
+          `<b>Deposited:</b> ${amount} ${currency}\n` +
+          `<b>Credited:</b> ${result.creditedXLM.toFixed(4)} XLM\n` +
+          `<b>Deposit ID:</b> \`${result.depositId}\`\n` +
+          (result.stellarTxHash ? `<b>Tx:</b> \`${result.stellarTxHash.slice(0, 12)}...\`\n` : '') +
           `\nUse /mybalance to check your updated balance.`,
-          { parse_mode: "Markdown" }
+          { parse_mode: "HTML" }
         );
       } else {
         bot.sendMessage(
           chatId,
-          `❌ **Deposit Failed**\n\n${result.message}\n\n` +
+          `❌ <b>Deposit Failed</b>\n\n${result.message}\n\n` +
           `_For testnet, try /fundwallet instead._`,
-          { parse_mode: "Markdown" }
+          { parse_mode: "HTML" }
         );
       }
     } catch (err: any) {
       bot.sendMessage(
         chatId,
         `❌ Error: ${err.message || "Deposit failed"}`,
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
     }
   });
@@ -570,7 +676,7 @@ function initBot() {
         chatId,
         "❌ No wallet connected.\n\n" +
         "Connect a wallet first via StellrFlow workflow, then use /withdraw.",
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
       return;
     }
@@ -584,17 +690,17 @@ function initBot() {
 
       bot.sendMessage(
         chatId,
-        "💸 **Withdraw Funds (Off-Ramp)**\n\n" +
+        "💸 <b>Withdraw Funds (Off-Ramp)</b>\n\n" +
         "Convert XLM to fiat and withdraw.\n\n" +
-        "**Usage:** `/withdraw <xlm_amount> [currency]`\n\n" +
-        "**Examples:**\n" +
+        "<b>Usage:</b> `/withdraw <xlm_amount> [currency]`\n\n" +
+        "<b>Examples:</b>\n" +
         "• `/withdraw 10` - Withdraw 10 XLM to USD\n" +
         "• `/withdraw 50 EUR` - Withdraw 50 XLM to EUR\n" +
         "• `/withdraw 100 INR` - Withdraw 100 XLM to INR\n\n" +
-        "**Current Rate (Demo):**\n" +
+        "<b>Current Rate (Demo):</b>\n" +
         `• 10 XLM = ~$${estimate.estimatedFiat} USD\n\n` +
         "_Supported: USD, EUR, INR_",
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
       return;
     }
@@ -614,11 +720,11 @@ function initBot() {
       if (balance < xlmAmount) {
         bot.sendMessage(
           chatId,
-          `❌ **Insufficient Balance**\n\n` +
-          `**Requested:** ${xlmAmount} XLM\n` +
-          `**Available:** ${balance.toFixed(4)} XLM\n\n` +
+          `❌ <b>Insufficient Balance</b>\n\n` +
+          `<b>Requested:</b> ${xlmAmount} XLM\n` +
+          `<b>Available:</b> ${balance.toFixed(4)} XLM\n\n` +
           `Use /addfunds to deposit more.`,
-          { parse_mode: "Markdown" }
+          { parse_mode: "HTML" }
         );
         return;
       }
@@ -628,10 +734,10 @@ function initBot() {
 
       bot.sendMessage(
         chatId,
-        `⏳ **Processing Withdrawal...**\n\n` +
-        `**XLM Amount:** ${xlmAmount} XLM\n` +
-        `**Est. Payout:** ~${estimate.estimatedFiat} ${currency}`,
-        { parse_mode: "Markdown" }
+        `⏳ <b>Processing Withdrawal...</b>\n\n` +
+        `<b>XLM Amount:</b> ${xlmAmount} XLM\n` +
+        `<b>Est. Payout:</b> ~${estimate.estimatedFiat} ${currency}`,
+        { parse_mode: "HTML" }
       );
 
       // Process withdrawal (hackathon demo mode - simulated)
@@ -640,20 +746,20 @@ function initBot() {
       if (result.success) {
         bot.sendMessage(
           chatId,
-          `✅ **Withdrawal Processed!**\n\n` +
-          `**Withdrawn:** ${result.xlmDebited} XLM\n` +
-          `**Payout:** ${result.fiatPayout} ${result.currency}\n` +
-          `**Withdrawal ID:** \`${result.withdrawalId}\`\n` +
-          `**ETA:** ${result.eta}\n` +
-          (result.stellarTxHash ? `**Tx:** \`${result.stellarTxHash.slice(0, 12)}...\`\n` : '') +
+          `✅ <b>Withdrawal Processed!</b>\n\n` +
+          `<b>Withdrawn:</b> ${result.xlmDebited} XLM\n` +
+          `<b>Payout:</b> ${result.fiatPayout} ${result.currency}\n` +
+          `<b>Withdrawal ID:</b> \`${result.withdrawalId}\`\n` +
+          `<b>ETA:</b> ${result.eta}\n` +
+          (result.stellarTxHash ? `<b>Tx:</b> \`${result.stellarTxHash.slice(0, 12)}...\`\n` : '') +
           `\n_Demo: In production, funds would be sent to your bank._`,
-          { parse_mode: "Markdown" }
+          { parse_mode: "HTML" }
         );
       } else {
         bot.sendMessage(
           chatId,
-          `❌ **Withdrawal Failed**\n\n${result.message}`,
-          { parse_mode: "Markdown" }
+          `❌ <b>Withdrawal Failed</b>\n\n${result.message}`,
+          { parse_mode: "HTML" }
         );
       }
     } catch (err: any) {
@@ -662,13 +768,13 @@ function initBot() {
           chatId,
           `❌ Wallet not funded on Stellar network.\n\n` +
           `Use /fundwallet first to activate your account.`,
-          { parse_mode: "Markdown" }
+          { parse_mode: "HTML" }
         );
       } else {
         bot.sendMessage(
           chatId,
           `❌ Error: ${err.message || "Withdrawal failed"}`,
-          { parse_mode: "Markdown" }
+          { parse_mode: "HTML" }
         );
       }
     }
@@ -684,63 +790,80 @@ function initBot() {
 
     bot.sendMessage(
       chatId,
-      `📊 **Current Exchange Rates (Demo)**\n\n` +
-      `**Deposit (Fiat → XLM):**\n` +
+      `📊 <b>Exchange Rates (Demo)</b>\n\n` +
+      `<b>Deposit (Fiat → XLM):</b>\n` +
       `• 1 USD = ${usdRate.rate} XLM\n` +
       `• 1 EUR = ${eurRate.rate.toFixed(2)} XLM\n` +
       `• 1 INR = ${inrRate.rate} XLM\n\n` +
-      `**Withdraw (XLM → Fiat):**\n` +
+      `<b>Withdraw (XLM → Fiat):</b>\n` +
       `• 1 XLM = $${(1 / usdRate.rate).toFixed(2)} USD\n` +
       `• 1 XLM = €${(1 / eurRate.rate).toFixed(2)} EUR\n` +
       `• 1 XLM = ₹${(1 / inrRate.rate).toFixed(2)} INR\n\n` +
-      `_Rates are demo values for hackathon._`,
-      { parse_mode: "Markdown" }
+      `<i>Demo rates for hackathon.</i>`,
+      { parse_mode: "HTML" }
     );
   });
 
-  // /txhistory - Show anchor transaction history for this user
-  bot.onText(/\/txhistory/, (msg) => {
+  // /txhistory - Show real on-chain Stellar transactions from Horizon
+  bot.onText(/\/txhistory/, async (msg) => {
     const chatId = msg.chat.id.toString();
     const userId = msg.from?.id?.toString() || chatId;
     const wallet = freighterWallets.get(chatId) || userWallets.get(chatId);
 
     if (!wallet) {
-      bot.sendMessage(chatId, "❌ No wallet connected.", { parse_mode: "Markdown" });
+      bot.sendMessage(chatId, "❌ No wallet connected.");
       return;
     }
 
-    const deps = getUserDeposits(userId);
-    const wdrs = getUserWithdrawals(userId);
+    bot.sendMessage(chatId, "⏳ Loading transactions...");
 
-    if (deps.length === 0 && wdrs.length === 0) {
-      bot.sendMessage(
-        chatId,
-        "📋 **Transaction History**\n\nNo anchor transactions yet.\n\nUse /addfunds or /withdraw to get started.",
-        { parse_mode: "Markdown" }
+    try {
+      const res = await fetch(
+        `https://horizon-testnet.stellar.org/accounts/${wallet.publicKey}/transactions?limit=10&order=desc`,
+        { signal: AbortSignal.timeout(8000) }
       );
-      return;
-    }
 
-    let text = "📋 **Transaction History**\n\n";
+      if (!res.ok) throw new Error("Horizon error");
+      const data: any = await res.json();
+      const txs: any[] = data._embedded?.records ?? [];
 
-    if (deps.length > 0) {
-      text += "**Deposits (On-Ramp):**\n";
-      for (const d of deps.slice(-5)) {
-        const icon = d.status === 'completed' ? '✅' : d.status === 'failed' ? '❌' : '⏳';
-        text += `${icon} \`${d.depositId}\` — ${d.fiatAmount} ${d.currency} → ${d.creditedXLM || d.estimatedXLM} XLM (${d.status})\n`;
+      if (txs.length === 0) {
+        bot.sendMessage(chatId, "📋 No on-chain transactions yet.\n\nUse /fundwallet then /send to get started.");
+        return;
       }
-      text += "\n";
-    }
 
-    if (wdrs.length > 0) {
-      text += "**Withdrawals (Off-Ramp):**\n";
-      for (const w of wdrs.slice(-5)) {
-        const icon = w.status === 'completed' ? '✅' : w.status === 'failed' ? '❌' : '⏳';
-        text += `${icon} \`${w.withdrawalId}\` — ${w.xlmAmount} XLM → ${w.actualFiatPayout || w.estimatedFiat} ${w.currency} (${w.status})\n`;
+      let text = "📋 <b>On-Chain Transactions</b> (last 10)\n\n";
+      for (const tx of txs) {
+        const date = new Date(tx.created_at).toLocaleDateString("en-GB");
+        const hash = tx.hash as string;
+        const memo = tx.memo ? ` · <i>${esc(String(tx.memo))}</i>` : "";
+        const ops = tx.operation_count ?? "?";
+        text += `• ${date} · ${ops} op(s)${memo}\n  <a href="https://stellar.expert/explorer/testnet/tx/${esc(hash)}">${esc(hash.slice(0, 10))}...</a>\n\n`;
+      }
+
+      // Also show anchor history if any
+      const deps = getUserDeposits(userId);
+      const wdrs = getUserWithdrawals(userId);
+      if (deps.length > 0 || wdrs.length > 0) {
+        text += "─────────────────\n<b>Anchor History</b>\n";
+        for (const d of deps.slice(-3)) {
+          const icon = d.status === 'completed' ? '✅' : d.status === 'failed' ? '❌' : '⏳';
+          text += `${icon} +${d.creditedXLM || d.estimatedXLM} XLM (deposit, ${d.status})\n`;
+        }
+        for (const w of wdrs.slice(-3)) {
+          const icon = w.status === 'completed' ? '✅' : w.status === 'failed' ? '❌' : '⏳';
+          text += `${icon} -${w.xlmAmount} XLM (withdraw, ${w.status})\n`;
+        }
+      }
+
+      bot.sendMessage(chatId, text, { parse_mode: "HTML" });
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        bot.sendMessage(chatId, "📋 Wallet not yet activated on Stellar. Use /fundwallet first.");
+      } else {
+        bot.sendMessage(chatId, "❌ Could not load transactions. Try again in a moment.");
       }
     }
-
-    bot.sendMessage(chatId, text, { parse_mode: "Markdown" });
   });
 
   // /depositstatus <id> - Check a specific deposit
@@ -749,28 +872,28 @@ function initBot() {
     const depositId = match?.[1]?.trim();
 
     if (!depositId) {
-      bot.sendMessage(chatId, "**Usage:** `/depositstatus DEP-XXXXX`", { parse_mode: "Markdown" });
+      bot.sendMessage(chatId, "Usage: <code>/depositstatus DEP-XXXXX</code>", { parse_mode: "HTML" });
       return;
     }
 
     const d = getDeposit(depositId);
     if (!d) {
-      bot.sendMessage(chatId, `❌ Deposit \`${depositId}\` not found.`, { parse_mode: "Markdown" });
+      bot.sendMessage(chatId, `❌ Deposit <code>${esc(depositId)}</code> not found.`, { parse_mode: "HTML" });
       return;
     }
 
     const icon = d.status === 'completed' ? '✅' : d.status === 'failed' ? '❌' : '⏳';
     bot.sendMessage(
       chatId,
-      `${icon} **Deposit Details**\n\n` +
-      `**ID:** \`${d.depositId}\`\n` +
-      `**Status:** ${d.status}\n` +
-      `**Amount:** ${d.fiatAmount} ${d.currency}\n` +
-      `**XLM Credited:** ${d.creditedXLM || '—'}\n` +
-      `**Rate:** 1 ${d.currency} = ${d.exchangeRate} XLM\n` +
-      (d.stellarTxHash ? `**Stellar Tx:** \`${d.stellarTxHash.slice(0, 16)}...\`\n` : '') +
-      `**Created:** ${d.createdAt.toISOString()}`,
-      { parse_mode: "Markdown" }
+      `${icon} <b>Deposit Details</b>\n\n` +
+      `<b>ID:</b> <code>${esc(d.depositId)}</code>\n` +
+      `<b>Status:</b> ${esc(d.status)}\n` +
+      `<b>Amount:</b> ${d.fiatAmount} ${esc(d.currency)}\n` +
+      `<b>XLM Credited:</b> ${d.creditedXLM || '—'}\n` +
+      `<b>Rate:</b> 1 ${esc(d.currency)} = ${d.exchangeRate} XLM\n` +
+      (d.stellarTxHash ? `<b>Stellar Tx:</b> <code>${esc(d.stellarTxHash.slice(0, 16))}...</code>\n` : '') +
+      `<b>Created:</b> ${new Date(d.createdAt).toLocaleString()}`,
+      { parse_mode: "HTML" }
     );
   });
 
@@ -780,49 +903,216 @@ function initBot() {
     const wdrId = match?.[1]?.trim();
 
     if (!wdrId) {
-      bot.sendMessage(chatId, "**Usage:** `/withdrawstatus WDR-XXXXX`", { parse_mode: "Markdown" });
+      bot.sendMessage(chatId, "Usage: <code>/withdrawstatus WDR-XXXXX</code>", { parse_mode: "HTML" });
       return;
     }
 
     const w = getWithdrawal(wdrId);
     if (!w) {
-      bot.sendMessage(chatId, `❌ Withdrawal \`${wdrId}\` not found.`, { parse_mode: "Markdown" });
+      bot.sendMessage(chatId, `❌ Withdrawal <code>${esc(wdrId)}</code> not found.`, { parse_mode: "HTML" });
       return;
     }
 
     const icon = w.status === 'completed' ? '✅' : w.status === 'failed' ? '❌' : '⏳';
     bot.sendMessage(
       chatId,
-      `${icon} **Withdrawal Details**\n\n` +
-      `**ID:** \`${w.withdrawalId}\`\n` +
-      `**Status:** ${w.status}\n` +
-      `**XLM Debited:** ${w.xlmAmount}\n` +
-      `**Fiat Payout:** ${w.actualFiatPayout || w.estimatedFiat} ${w.currency}\n` +
-      `**ETA:** ${w.eta}\n` +
-      (w.stellarTxHash ? `**Stellar Tx:** \`${w.stellarTxHash.slice(0, 16)}...\`\n` : '') +
-      `**Created:** ${w.createdAt.toISOString()}`,
-      { parse_mode: "Markdown" }
+      `${icon} <b>Withdrawal Details</b>\n\n` +
+      `<b>ID:</b> <code>${esc(w.withdrawalId)}</code>\n` +
+      `<b>Status:</b> ${esc(w.status)}\n` +
+      `<b>XLM Debited:</b> ${w.xlmAmount}\n` +
+      `<b>Fiat Payout:</b> ${w.actualFiatPayout || w.estimatedFiat} ${esc(w.currency)}\n` +
+      `<b>ETA:</b> ${esc(w.eta)}\n` +
+      (w.stellarTxHash ? `<b>Stellar Tx:</b> <code>${esc(w.stellarTxHash.slice(0, 16))}...</code>\n` : '') +
+      `<b>Created:</b> ${new Date(w.createdAt).toLocaleString()}`,
+      { parse_mode: "HTML" }
     );
   });
 
-  // Send XLM from wallet
-  bot.onText(/\/send(?:\s+(\S+)\s+(\S+))?/, async (msg, match) => {
+  // Persistent quick-action keyboard shown after wallet-connected actions
+  function showMainKeyboard(chatId: string, message: string) {
+    bot.sendMessage(chatId, message, {
+      reply_markup: {
+        keyboard: [
+          [{ text: "💰 Balance" }, { text: "📤 Send XLM" }, { text: "📋 History" }],
+          [{ text: "💱 Rates" }, { text: "❓ Help" }],
+        ],
+        resize_keyboard: true,
+        is_persistent: true,
+      },
+    });
+  }
+
+  // /addcontact NAME ADDRESS — save to address book
+  bot.onText(/\/addcontact(?:\s+(\S+)\s+(\S+))?/, (msg, match) => {
+    const chatId = msg.chat.id.toString();
+    const name = match?.[1]?.trim();
+    const address = match?.[2]?.trim();
+
+    if (!name || !address) {
+      bot.sendMessage(chatId,
+        "<b>Add Contact</b>\n\nUsage: <code>/addcontact NAME ADDRESS</code>\nExample: <code>/addcontact Alice GABC...XYZ</code>",
+        { parse_mode: "HTML" }
+      );
+      return;
+    }
+    if (!/^G[A-Z2-7]{55}$/.test(address)) {
+      bot.sendMessage(chatId, "❌ Invalid Stellar address. Must start with G and be 56 characters.");
+      return;
+    }
+    getContacts(chatId).set(name.toLowerCase(), address);
+    bot.sendMessage(chatId, `✅ <b>${esc(name)}</b> saved.\n<code>${esc(address)}</code>`, { parse_mode: "HTML" });
+  });
+
+  // /contacts — list address book
+  bot.onText(/\/contacts/, (msg) => {
+    const chatId = msg.chat.id.toString();
+    const contacts = getContacts(chatId);
+    if (contacts.size === 0) {
+      bot.sendMessage(chatId,
+        "📒 Address book is empty.\n\nAdd contacts with:\n<code>/addcontact NAME ADDRESS</code>",
+        { parse_mode: "HTML" }
+      );
+      return;
+    }
+    let text = "📒 <b>Address Book</b>\n\n";
+    for (const [name, addr] of contacts) {
+      text += `<b>${esc(name)}</b>\n<code>${esc(addr.slice(0, 8))}...${esc(addr.slice(-8))}</code>\n\n`;
+    }
+    text += "<i>Send to a contact: /send NAME AMOUNT</i>";
+    bot.sendMessage(chatId, text, { parse_mode: "HTML" });
+  });
+
+  // /deletecontact NAME — remove from address book
+  bot.onText(/\/deletecontact(?:\s+(.+))?/, (msg, match) => {
+    const chatId = msg.chat.id.toString();
+    const name = match?.[1]?.trim()?.toLowerCase();
+    if (!name) { bot.sendMessage(chatId, "Usage: <code>/deletecontact NAME</code>", { parse_mode: "HTML" }); return; }
+    const contacts = getContacts(chatId);
+    if (contacts.delete(name)) {
+      bot.sendMessage(chatId, `✅ Contact <b>${esc(name)}</b> removed.`, { parse_mode: "HTML" });
+    } else {
+      bot.sendMessage(chatId, `❌ Contact <b>${esc(name)}</b> not found.`, { parse_mode: "HTML" });
+    }
+  });
+
+  // /exportwallet — DM the user their secret key with a warning
+  bot.onText(/\/exportwallet/, async (msg) => {
+    const chatId = msg.chat.id.toString();
+    const wallet = userWallets.get(chatId);
+
+    if (!wallet) {
+      bot.sendMessage(chatId, "❌ No in-bot wallet found. This command only works for Telegram wallets.");
+      return;
+    }
+
+    // Only allow in private chats, not groups
+    if (msg.chat.type !== "private") {
+      bot.sendMessage(chatId, "🔒 For security, /exportwallet only works in a private chat with the bot.");
+      return;
+    }
+
+    bot.sendMessage(
+      chatId,
+      `🔑 <b>Wallet Backup</b>\n\n` +
+      `⚠️ <b>Keep this secret. Never share it.</b>\n\n` +
+      `<b>Public key:</b>\n<code>${esc(wallet.publicKey)}</code>\n\n` +
+      `<b>Secret key:</b>\n<code>${esc(wallet.secretKey)}</code>\n\n` +
+      `<i>This is a testnet wallet with no real value. Store it safely if you want to reuse it.</i>`,
+      { parse_mode: "HTML" }
+    );
+  });
+
+  // /watchbalance — poll Horizon every 30s and notify on change
+  bot.onText(/\/watchbalance/, async (msg) => {
+    const chatId = msg.chat.id.toString();
+    const wallet = freighterWallets.get(chatId) || userWallets.get(chatId);
+    if (!wallet) { bot.sendMessage(chatId, "❌ No wallet connected."); return; }
+
+    if (balanceWatchers.has(chatId)) {
+      bot.sendMessage(chatId, "👀 Already watching your balance. Use /stopwatch to stop.");
+      return;
+    }
+
+    let lastBalance = "";
+    const poll = async () => {
+      try {
+        const res = await fetch(
+          `https://horizon-testnet.stellar.org/accounts/${wallet.publicKey}/transactions?limit=1&order=desc`,
+          { signal: AbortSignal.timeout(6000) }
+        );
+        const account = await horizon.loadAccount(wallet.publicKey);
+        const xlm = account.balances.find((b) => b.asset_type === "native");
+        const bal = xlm && "balance" in xlm ? xlm.balance : "0";
+        if (lastBalance && bal !== lastBalance) {
+          const prev = parseFloat(lastBalance);
+          const curr = parseFloat(bal);
+          const diff = curr - prev;
+          const sign = diff > 0 ? "+" : "";
+          bot.sendMessage(
+            chatId,
+            `🔔 <b>Balance Changed!</b>\n\n${sign}${fmtXLM(diff.toFixed(7))} XLM\n<b>New balance:</b> ${fmtXLM(bal)} XLM`,
+            { parse_mode: "HTML" }
+          );
+        }
+        lastBalance = bal;
+      } catch { /* ignore transient errors */ }
+    };
+
+    await poll(); // seed lastBalance immediately
+    const id = setInterval(poll, 30_000);
+    balanceWatchers.set(chatId, id);
+    bot.sendMessage(chatId, "👀 <b>Watching your balance.</b> I'll notify you when it changes.\n\nUse /stopwatch to stop.", { parse_mode: "HTML" });
+  });
+
+  bot.onText(/\/stopwatch/, (msg) => {
+    const chatId = msg.chat.id.toString();
+    const id = balanceWatchers.get(chatId);
+    if (!id) { bot.sendMessage(chatId, "ℹ️ No active balance watcher."); return; }
+    clearInterval(id);
+    balanceWatchers.delete(chatId);
+    bot.sendMessage(chatId, "🛑 Balance watcher stopped.");
+  });
+
+  // Send XLM from wallet — /send [ADDR|AMOUNT] [AMOUNT|ADDR] [memo TEXT]
+  bot.onText(/\/send(?:\s+(\S+)\s+(\S+)(?:\s+memo\s+(.+))?)?/, async (msg, match) => {
     const chatId = msg.chat.id.toString();
     const wallet = userWallets.get(chatId);
     const freighterWallet = freighterWallets.get(chatId);
 
-    const destAddress = match?.[1]?.trim();
-    const amountStr = match?.[2]?.trim();
+    let destAddress = match?.[1]?.trim();
+    let amountStr = match?.[2]?.trim();
+    const memo = match?.[3]?.trim();
+
+    // Accept both "/send ADDR AMOUNT" and "/send AMOUNT ADDR" — auto-detect order
+    if (destAddress && amountStr && /^\d+(\.\d+)?$/.test(destAddress)) {
+      [destAddress, amountStr] = [amountStr, destAddress];
+    }
+
+    // Resolve contact name → address if destAddress isn't a Stellar key
+    if (destAddress && !/^G[A-Z2-7]{55}$/.test(destAddress)) {
+      const resolved = getContacts(chatId).get(destAddress.toLowerCase());
+      if (resolved) {
+        destAddress = resolved;
+      } else {
+        bot.sendMessage(chatId,
+          `❌ <b>${esc(destAddress)}</b> is not a valid Stellar address or saved contact.\n\nCheck /contacts or use the full address.`,
+          { parse_mode: "HTML" }
+        );
+        return;
+      }
+    }
 
     // Handle Freighter wallet - generate signing link
     if (freighterWallet && !wallet) {
       if (!destAddress || !amountStr) {
         bot.sendMessage(
           chatId,
-          "**Usage:** /send <destination_address> <amount>\n\n" +
-          "**Example:** /send GABC...XYZ 10\n\n" +
+          "<b>Send XLM (Freighter)</b>\n\n" +
+          "Usage: <code>/send ADDRESS AMOUNT</code>\n" +
+          "Also: <code>/send AMOUNT ADDRESS</code>\n\n" +
+          "Example: <code>/send GABC...XYZ 10</code>\n\n" +
           "You'll receive a link to sign the transaction with Freighter.",
-          { parse_mode: "Markdown" }
+          { parse_mode: "HTML" }
         );
         return;
       }
@@ -852,7 +1142,7 @@ function initBot() {
       bot.sendMessage(
         chatId,
         "❌ No wallet connected. Connect one via StellrFlow workflow.",
-        { parse_mode: "Markdown" }
+        { parse_mode: "HTML" }
       );
       return;
     }
@@ -860,100 +1150,272 @@ function initBot() {
     if (!destAddress || !amountStr) {
       bot.sendMessage(
         chatId,
-        "**Usage:** /send <destination_address> <amount>\n\n" +
-        "**Example:** /send GABC...XYZ 10\n\n" +
-        "This will send 10 XLM from your wallet.",
-        { parse_mode: "Markdown" }
+        "<b>Send XLM</b>\n\n" +
+        "Usage: <code>/send ADDRESS AMOUNT</code>\n" +
+        "Also: <code>/send AMOUNT ADDRESS</code>\n\n" +
+        "Example: <code>/send GABC...XYZ 10</code>\n\n" +
+        "This will send XLM directly from your wallet.",
+        { parse_mode: "HTML" }
       );
       return;
     }
 
     const amount = parseFloat(amountStr);
     if (isNaN(amount) || amount <= 0) {
-      bot.sendMessage(chatId, "❌ Invalid amount. Please enter a positive number.");
+      bot.sendMessage(
+        chatId,
+        `❌ <b>Invalid amount:</b> <code>${esc(amountStr ?? "")}</code>\n\n` +
+        `Try: <code>/send ${esc(destAddress ?? "ADDRESS")} 10</code>`,
+        { parse_mode: "HTML" }
+      );
       return;
     }
 
-    try {
-      bot.sendMessage(chatId, "⏳ Processing transaction...");
+    // Show confirmation before sending
+    pendingSends.set(chatId, { destAddress: destAddress!, amount, memo: memo || undefined });
+    bot.sendMessage(
+      chatId,
+      `📤 <b>Confirm Transaction</b>\n\n` +
+      `<b>To:</b> <code>${esc(destAddress!.slice(0, 8))}...${esc(destAddress!.slice(-8))}</code>\n` +
+      `<b>Amount:</b> ${amount} XLM\n` +
+      (memo ? `<b>Memo:</b> ${esc(memo)}\n` : "") +
+      `<b>Fee:</b> ~0.00001 XLM\n\n` +
+      `<i>This cannot be undone.</i>`,
+      {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [[
+            { text: "✅ Confirm", callback_data: "send_confirm" },
+            { text: "❌ Cancel", callback_data: "send_cancel" },
+          ]],
+        },
+      }
+    );
+    return;
 
-      // Load sender account
+  });
+
+  // Extracted: execute a confirmed XLM send for a Telegram wallet
+  async function executeSend(chatId: string, destAddress: string, amount: number, memo?: string) {
+    const wallet = userWallets.get(chatId);
+    if (!wallet) { bot.sendMessage(chatId, "❌ No wallet found."); return; }
+
+    bot.sendMessage(chatId, "⏳ Sending...");
+    try {
       const sourceKeypair = Keypair.fromSecret(wallet.secretKey);
       const sourceAccount = await horizon.loadAccount(wallet.publicKey);
 
-      // Check if destination exists
       let destinationExists = true;
-      try {
-        await horizon.loadAccount(destAddress);
-      } catch {
-        destinationExists = false;
-      }
+      try { await horizon.loadAccount(destAddress); } catch { destinationExists = false; }
 
-      // Build transaction
-      const networkPassphrase = STELLAR_NETWORK === "testnet"
-        ? Networks.TESTNET
-        : Networks.PUBLIC;
+      const networkPassphrase = STELLAR_NETWORK === "testnet" ? Networks.TESTNET : Networks.PUBLIC;
+      let txBuilder = new TransactionBuilder(sourceAccount, { fee: BASE_FEE, networkPassphrase });
 
-      let transaction;
       if (destinationExists) {
-        // Regular payment
-        transaction = new TransactionBuilder(sourceAccount, {
-          fee: BASE_FEE,
-          networkPassphrase,
-        })
-          .addOperation(
-            Operation.payment({
-              destination: destAddress,
-              asset: Asset.native(),
-              amount: amount.toFixed(7),
-            })
-          )
-          .setTimeout(30)
-          .build();
+        txBuilder = txBuilder.addOperation(Operation.payment({
+          destination: destAddress, asset: Asset.native(), amount: amount.toFixed(7),
+        }));
       } else {
-        // Create account operation for new accounts
         if (amount < 1) {
-          bot.sendMessage(
-            chatId,
-            "❌ Destination account doesn't exist. Minimum 1 XLM required to create it."
-          );
+          bot.sendMessage(chatId, "❌ New account needs at least <b>1 XLM</b> to activate.", { parse_mode: "HTML" });
           return;
         }
-        transaction = new TransactionBuilder(sourceAccount, {
-          fee: BASE_FEE,
-          networkPassphrase,
-        })
-          .addOperation(
-            Operation.createAccount({
-              destination: destAddress,
-              startingBalance: amount.toFixed(7),
-            })
-          )
-          .setTimeout(30)
-          .build();
+        txBuilder = txBuilder.addOperation(Operation.createAccount({
+          destination: destAddress, startingBalance: amount.toFixed(7),
+        }));
       }
 
-      // Sign and submit
+      if (memo) txBuilder = txBuilder.addMemo({ type: "text", value: memo } as any);
+      const transaction = txBuilder.setTimeout(30).build();
       transaction.sign(sourceKeypair);
       const result = await horizon.submitTransaction(transaction);
 
       bot.sendMessage(
         chatId,
-        `✅ **Transaction Successful!**\n\n` +
-        `**Sent:** ${amount} XLM\n` +
-        `**To:** \`${destAddress.slice(0, 8)}...${destAddress.slice(-8)}\`\n\n` +
-        `🔗 [View on Explorer](https://stellar.expert/explorer/${STELLAR_NETWORK}/tx/${result.hash})`,
-        { parse_mode: "Markdown" }
+        `✅ <b>Transaction Successful!</b>\n\n` +
+        `<b>Sent:</b> ${amount} XLM\n` +
+        `<b>To:</b> <code>${esc(destAddress.slice(0, 8))}...${esc(destAddress.slice(-8))}</code>\n` +
+        (memo ? `<b>Memo:</b> ${esc(memo)}\n` : "") +
+        `\n🔗 <a href="https://stellar.expert/explorer/${STELLAR_NETWORK}/tx/${esc(result.hash)}">View on Explorer</a>`,
+        { parse_mode: "HTML" }
       );
     } catch (err: any) {
+      const bal = err?.response?.data?.extras?.result_codes?.operations?.[0];
+      const hint = bal === "op_underfunded"
+        ? "\n\n💡 Your balance is too low. Use /fundwallet."
+        : bal === "op_no_destination"
+        ? "\n\n💡 Destination doesn't exist. Send at least 1 XLM to create it."
+        : "";
       const errorMsg = err?.response?.data?.extras?.result_codes
         ? JSON.stringify(err.response.data.extras.result_codes)
         : err.message || "Transaction failed";
+      bot.sendMessage(chatId, `❌ <b>Transaction failed:</b> ${esc(errorMsg)}${hint}`, { parse_mode: "HTML" });
+    }
+  }
+
+  // Inline keyboard button handlers
+  bot.on("callback_query", async (query) => {
+    const chatId = query.message?.chat.id.toString();
+    if (!chatId) return;
+    await bot.answerCallbackQuery(query.id);
+
+    if (query.data === "check_balance") {
+      const wallet = freighterWallets.get(chatId) || userWallets.get(chatId);
+      if (!wallet) { bot.sendMessage(chatId, "❌ No wallet connected."); return; }
+      const walletType = freighterWallets.has(chatId) ? "🦊 Freighter" : "📱 Telegram";
+      try {
+        const account = await horizon.loadAccount(wallet.publicKey);
+        const xlm = account.balances.find((b) => b.asset_type === "native");
+        const bal = xlm && "balance" in xlm ? xlm.balance : "0";
+        bot.sendMessage(chatId, `${walletType} <b>Balance:</b> ${fmtXLM(bal)} XLM`, { parse_mode: "HTML" });
+      } catch {
+        bot.sendMessage(chatId, "❌ Could not load balance. Try /mybalance.");
+      }
+    } else if (query.data === "fund_wallet") {
+      const wallet = userWallets.get(chatId);
+      if (!wallet) { bot.sendMessage(chatId, "ℹ️ /fundwallet only works with a Telegram in-bot wallet."); return; }
+      bot.sendMessage(chatId, "⏳ Requesting testnet XLM...");
+      try {
+        const res = await fetch(`https://friendbot.stellar.org?addr=${wallet.publicKey}`);
+        if (res.ok) {
+          bot.sendMessage(chatId, `✅ <b>Funded!</b> 10,000 testnet XLM added.\n\nUse /mybalance to confirm.`, { parse_mode: "HTML" });
+        } else {
+          bot.sendMessage(chatId, "❌ Funding failed — wallet may already be funded. Try /mybalance.");
+        }
+      } catch {
+        bot.sendMessage(chatId, "❌ Funding failed. Try /fundwallet again.");
+      }
+    } else if (query.data === "send_help") {
       bot.sendMessage(
         chatId,
-        `❌ Transaction failed: ${errorMsg}`,
-        { parse_mode: "Markdown" }
+        "<b>Send XLM</b>\n\n" +
+        "Usage: <code>/send ADDRESS AMOUNT</code>\n" +
+        "Also: <code>/send AMOUNT ADDRESS</code>\n\n" +
+        "Example: <code>/send GABC...XYZ 10</code>",
+        { parse_mode: "HTML" }
       );
+    } else if (query.data === "refresh_balance") {
+      const wallet = freighterWallets.get(chatId) || userWallets.get(chatId);
+      if (!wallet) { bot.sendMessage(chatId, "❌ No wallet connected."); return; }
+      const walletType = freighterWallets.has(chatId) ? "🦊 Freighter" : "📱 Telegram";
+      try {
+        const account = await horizon.loadAccount(wallet.publicKey);
+        const xlm = account.balances.find((b) => b.asset_type === "native");
+        const bal = xlm && "balance" in xlm ? xlm.balance : "0";
+        bot.sendMessage(
+          chatId,
+          `${walletType} <b>Balance:</b> ${fmtXLM(bal)} XLM\n<i>Updated just now</i>`,
+          { parse_mode: "HTML" }
+        );
+      } catch {
+        bot.sendMessage(chatId, "❌ Could not refresh. Try /mybalance.");
+      }
+
+    // ── Send confirmation ─────────────────────────────────────────────────────
+    } else if (query.data === "send_confirm") {
+      const pending = pendingSends.get(chatId);
+      pendingSends.delete(chatId);
+      if (!pending) { bot.sendMessage(chatId, "❌ No pending transaction. Try /send again."); return; }
+      await executeSend(chatId, pending.destAddress, pending.amount, pending.memo);
+    } else if (query.data === "send_cancel") {
+      pendingSends.delete(chatId);
+      bot.sendMessage(chatId, "❌ Transaction cancelled.");
+
+    // ── Onboarding callbacks ──────────────────────────────────────────────────
+    } else if (query.data === "onboard_create") {
+      bot.sendMessage(
+        chatId,
+        "🆕 <b>Create your Stellar wallet</b>\n\nRun this command to generate a wallet stored in the bot:\n\n<code>/createwallet</code>",
+        { parse_mode: "HTML" }
+      );
+    } else if (query.data === "onboard_freighter") {
+      bot.sendMessage(
+        chatId,
+        "🦊 <b>Connect Freighter</b>\n\nFreighter is a browser extension wallet. To connect it to this bot:\n\n1. Open StellrFlow at your frontend URL\n2. Click <b>Connect Wallet</b> → Freighter\n3. Run a workflow with the Telegram trigger\n\nYour Freighter wallet will then be linked to this chat.",
+        { parse_mode: "HTML" }
+      );
+    } else if (query.data === "onboard_explain") {
+      bot.sendMessage(
+        chatId,
+        "❓ <b>In-Bot Wallet vs Freighter</b>\n\n" +
+        "<b>📱 In-Bot Wallet</b>\n• Created instantly here in Telegram\n• Key stored on the bot server\n• Works on testnet only\n• Good for quick demos\n\n" +
+        "<b>🦊 Freighter Wallet</b>\n• Your own browser extension\n• You control the private key\n• Works on mainnet\n• More secure\n\n" +
+        "For hackathon testing, tap <b>Create In-Bot Wallet</b>.",
+        {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: "🆕 Create In-Bot Wallet", callback_data: "onboard_create" }],
+              [{ text: "🦊 I have Freighter", callback_data: "onboard_freighter" }],
+            ],
+          },
+        }
+      );
+
+    // ── Misc callbacks ────────────────────────────────────────────────────────
+    } else if (query.data === "show_help") {
+      bot.sendMessage(
+        chatId,
+        "<b>StellrFlow Bot Commands</b>\n\n" +
+        "/mybalance — Your wallet balance\n" +
+        "/send ADDR AMOUNT — Send XLM\n" +
+        "/txhistory — On-chain transactions\n" +
+        "/contacts — Address book\n" +
+        "/fundwallet — Get testnet XLM\n" +
+        "/rates — Exchange rates\n" +
+        "/exportwallet — Backup your key\n" +
+        "/watchbalance — Balance notifications\n" +
+        "/help — Full command list",
+        { parse_mode: "HTML" }
+      );
+    } else if (query.data === "tx_history") {
+      // Trigger real tx history (reuse handler logic inline)
+      const wallet = freighterWallets.get(chatId) || userWallets.get(chatId);
+      if (!wallet) { bot.sendMessage(chatId, "❌ No wallet connected."); return; }
+      bot.sendMessage(chatId, "⏳ Loading transactions...");
+      try {
+        const res = await fetch(
+          `https://horizon-testnet.stellar.org/accounts/${wallet.publicKey}/transactions?limit=5&order=desc`,
+          { signal: AbortSignal.timeout(8000) }
+        );
+        if (!res.ok) throw new Error("Horizon error");
+        const data: any = await res.json();
+        const txs: any[] = data._embedded?.records ?? [];
+        if (txs.length === 0) {
+          bot.sendMessage(chatId, "📋 No transactions found on-chain yet.\n\nUse /fundwallet then /send to create some.");
+          return;
+        }
+        let text = "📋 <b>Recent Transactions</b>\n\n";
+        for (const tx of txs) {
+          const date = new Date(tx.created_at).toLocaleDateString();
+          const hash = tx.hash as string;
+          text += `• ${date} — <a href="https://stellar.expert/explorer/testnet/tx/${esc(hash)}">${esc(hash.slice(0, 8))}...</a>\n`;
+        }
+        bot.sendMessage(chatId, text, { parse_mode: "HTML" });
+      } catch {
+        bot.sendMessage(chatId, "❌ Could not load transactions. Try /txhistory.");
+      }
+    }
+  });
+
+  // Persistent keyboard shortcut text → dispatch as equivalent command message
+  bot.on("message", (msg) => {
+    const chatId = msg.chat.id.toString();
+    const text = msg.text?.trim();
+    if (!text) return;
+    const aliasMap: Record<string, string> = {
+      "💰 Balance": "/mybalance",
+      "📤 Send XLM": "/send",
+      "📋 History": "/txhistory",
+      "💱 Rates": "/rates",
+      "❓ Help": "/help",
+    };
+    if (aliasMap[text]) {
+      // Re-process as if the user typed the command
+      bot.processUpdate({
+        update_id: 0,
+        message: { ...msg, text: aliasMap[text] },
+      });
     }
   });
 
@@ -976,110 +1438,93 @@ function initBot() {
     }
 
     if (!hasChatbot) {
-      // Session exists but chatbot not enabled
       await bot.sendMessage(
         chatId,
-        "💡 To enable the AI chatbot, connect the **Stellar SDK (Chatbot)** block to your Telegram trigger in StellrFlow and run the workflow again.",
-        { parse_mode: "Markdown" }
+        "💡 To enable the AI chatbot, connect the <b>Stellar SDK (Chatbot)</b> block to your Telegram trigger in StellrFlow and run the workflow again.",
+        { parse_mode: "HTML" }
       );
       return;
     }
 
-    // Chatbot is enabled - answer Stellar-related questions using SDK/docs
+    // Chatbot is enabled — try keyword shortcuts first, then fall through to OpenAI
     if (text.length > 2) {
       try {
         const lower = text.toLowerCase();
         let reply = "";
 
-        if (lower.includes("balance") || lower.includes("xlm")) {
+        if (lower.includes("balance")) {
           const addrMatch = text.match(/G[A-Z2-7]{55}/);
           if (addrMatch) {
             const account = await horizon.loadAccount(addrMatch[0]);
             const xlm = account.balances.find((b) => b.asset_type === "native");
             const bal = xlm && "balance" in xlm ? xlm.balance : "0";
-            reply = `💰 Balance: **${bal} XLM**`;
+            reply = `💰 <b>Balance:</b> ${fmtXLM(bal)} XLM`;
           } else {
-            reply = "Send `/balance G...` with a Stellar address to check balance.";
+            reply = "Use <code>/balance G...</code> with a Stellar address to check balance.";
           }
         } else if (lower.includes("what is stellar") || lower.includes("about stellar")) {
           reply =
-            "🌟 **Stellar** is a decentralized, open-source blockchain network designed for fast, low-cost cross-border payments and asset transfers.\n\n" +
-            "Key features:\n" +
+            "🌟 <b>Stellar</b> is a decentralized, open-source blockchain for fast, low-cost cross-border payments.\n\n" +
             "• Transactions settle in 3-5 seconds\n" +
             "• Fees are ~0.00001 XLM (~$0.000001)\n" +
-            "• Built-in DEX for asset exchange\n" +
-            "• Supports tokenization of any asset\n\n" +
-            "📚 Docs: https://developers.stellar.org";
+            "• Built-in DEX for asset exchange\n\n" +
+            "📚 https://developers.stellar.org";
         } else if (lower.includes("soroban")) {
           reply =
-            "🔧 **Soroban** is Stellar's smart contract platform.\n\n" +
-            "Features:\n" +
+            "🔧 <b>Soroban</b> is Stellar's smart contract platform.\n\n" +
             "• Written in Rust, compiled to WASM\n" +
             "• Predictable gas fees\n" +
-            "• Built-in testing framework\n" +
-            "• Interoperable with Stellar's asset layer\n\n" +
-            "📚 Start building: https://soroban.stellar.org";
+            "• Built-in testing framework\n\n" +
+            "📚 https://soroban.stellar.org";
         } else if (lower.includes("anchor") || lower.includes("sep")) {
           reply =
-            "⚓ **Anchors** are bridges between Stellar and traditional finance.\n\n" +
-            "Key SEPs (Stellar Ecosystem Proposals):\n" +
-            "• **SEP-6** - Deposit/withdraw fiat\n" +
-            "• **SEP-10** - Authentication\n" +
-            "• **SEP-24** - Interactive deposits\n" +
-            "• **SEP-31** - Cross-border payments\n\n" +
-            "📚 Docs: https://developers.stellar.org/docs/anchoring-assets";
+            "⚓ <b>Anchors</b> are bridges between Stellar and traditional finance.\n\n" +
+            "• SEP-6: Deposit/withdraw fiat\n" +
+            "• SEP-10: Authentication\n" +
+            "• SEP-24: Interactive deposits\n\n" +
+            "📚 https://developers.stellar.org/docs/anchoring-assets";
         } else if (lower.includes("xlm") || lower.includes("lumen")) {
           reply =
-            "💫 **XLM (Lumens)** is Stellar's native cryptocurrency.\n\n" +
-            "Uses:\n" +
-            "• Pay transaction fees\n" +
+            "💫 <b>XLM (Lumens)</b> is Stellar's native currency.\n\n" +
+            "• Pays transaction fees\n" +
             "• Minimum balance requirements\n" +
-            "• Bridge currency for asset exchange\n\n" +
-            "Current network: " + STELLAR_NETWORK;
-        } else if (lower.includes("freighter") || lower.includes("wallet")) {
+            "• Bridge currency for exchange\n\n" +
+            `Network: ${esc(STELLAR_NETWORK)}`;
+        } else if (lower.includes("freighter")) {
           reply =
-            "👛 **Freighter** is the most popular Stellar wallet browser extension.\n\n" +
-            "Features:\n" +
+            "👛 <b>Freighter</b> is the most popular Stellar wallet browser extension.\n\n" +
             "• Secure key management\n" +
-            "• Sign Soroban transactions\n" +
-            "• Multiple account support\n\n" +
-            "🔗 Install: https://freighter.app";
+            "• Signs Soroban transactions\n\n" +
+            "🔗 https://freighter.app";
         } else if (lower.includes("horizon") || lower.includes("api")) {
           reply =
-            "🌐 **Horizon** is Stellar's REST API server.\n\n" +
-            "Endpoints:\n" +
-            "• `/accounts/{id}` - Account info\n" +
-            "• `/transactions` - Submit/query txns\n" +
-            "• `/assets` - Asset info\n\n" +
-            "📚 API Docs: https://developers.stellar.org/api/horizon";
-        } else if (lower.includes("help") || lower.includes("?")) {
-          reply =
-            "🤖 I can help with Stellar! Ask about:\n\n" +
-            "• What is Stellar?\n" +
-            "• What is Soroban?\n" +
-            "• What is XLM?\n" +
-            "• What are Anchors?\n" +
-            "• Tell me about Freighter wallet\n" +
-            "• /balance <address>\n\n" +
-            "Just type your question!";
+            "🌐 <b>Horizon</b> is Stellar's REST API.\n\n" +
+            "• /accounts/{id} — Account info\n" +
+            "• /transactions — Submit/query txns\n\n" +
+            "📚 https://developers.stellar.org/api/horizon";
         } else {
-          reply =
-            "🤔 I'm not sure about that. Try asking about:\n" +
-            "• Stellar basics\n" +
-            "• Soroban smart contracts\n" +
-            "• XLM / Lumens\n" +
-            "• Anchors & SEPs\n" +
-            "• Freighter wallet\n\n" +
-            "Or use `/balance <address>` to check a balance.";
+          // Unknown question — fall through to OpenAI if key is set
+          const openaiKey = process.env.OPENAI_API_KEY;
+          if (openaiKey && openaiKey !== "your_openai_api_key_here") {
+            await bot.sendChatAction(chatId, "typing");
+            reply = await answerStellarQuestion(text);
+          } else {
+            reply =
+              "🤔 Try asking about:\n" +
+              "• Stellar / XLM / Soroban\n" +
+              "• Anchors & SEPs\n" +
+              "• Freighter wallet\n\n" +
+              "Or use <code>/balance ADDRESS</code> to check a balance.";
+          }
         }
 
         if (reply) {
-          await bot.sendMessage(chatId, reply, { parse_mode: "Markdown" });
+          await bot.sendMessage(chatId, reply, { parse_mode: "HTML" });
         }
       } catch (err: any) {
         await bot.sendMessage(
           chatId,
-          `❌ Error: ${err?.response?.data?.detail || err.message || "Try again"}`
+          `❌ Error: ${esc(err?.response?.data?.detail || err.message || "Try again")}`
         );
       }
     }
@@ -1109,9 +1554,10 @@ function initBot() {
 
       bot.sendMessage(
         chatId,
-        `Balance for \`${address.slice(0, 8)}...\`:\n` +
-        `**${balanceStr} XLM**`,
-        { parse_mode: "Markdown" }
+        `<b>Balance</b> for <code>${esc(address.slice(0, 8))}...${esc(address.slice(-8))}</code>:\n` +
+        `<b>${fmtXLM(balanceStr)} XLM</b>\n\n` +
+        `🔗 <a href="https://stellar.expert/explorer/testnet/account/${esc(address)}">View on Explorer</a>`,
+        { parse_mode: "HTML" }
       );
     } catch (err: any) {
       bot.sendMessage(
@@ -1157,7 +1603,7 @@ mountRoutes(app, sendNotification);
 
 // Legacy inline routes removed — all API endpoints now served from ./routes/
 
-/**** REMOVED INLINE ROUTES — replaced by mountRoutes() above ****
+/**<b> REMOVED INLINE ROUTES — replaced by mountRoutes() above </b>**
 app.post("/api/telegram/send", validate(schemas.sendMessage), async (req, res) => {
   try {
     const { chatId, message, parseMode, disableNotification } = req.body;
@@ -2193,6 +2639,30 @@ app.get("/api/multisig/:chatId", (req, res) => {
 ****/
 
 initBot();
+
+// Register command autocomplete list so Telegram shows hints when user types "/"
+bot.setMyCommands([
+  { command: "start",        description: "Welcome & wallet setup" },
+  { command: "createwallet", description: "Create an in-bot Stellar wallet" },
+  { command: "fundwallet",   description: "Get 10,000 testnet XLM via Friendbot" },
+  { command: "mybalance",    description: "Check your wallet balance" },
+  { command: "mywallet",     description: "Show your wallet address" },
+  { command: "qrcode",       description: "Get wallet address as QR code" },
+  { command: "send",         description: "Send XLM — /send ADDR AMOUNT [memo TEXT]" },
+  { command: "txhistory",    description: "On-chain transaction history" },
+  { command: "contacts",     description: "Address book" },
+  { command: "addcontact",   description: "Save a contact — /addcontact NAME ADDRESS" },
+  { command: "watchbalance", description: "Notify when balance changes" },
+  { command: "stopwatch",    description: "Stop balance notifications" },
+  { command: "exportwallet", description: "Backup your wallet key (DM only)" },
+  { command: "balance",      description: "Check any Stellar address" },
+  { command: "rates",        description: "Current exchange rates" },
+  { command: "addfunds",     description: "Deposit fiat → XLM" },
+  { command: "withdraw",     description: "Withdraw XLM → fiat" },
+  { command: "status",       description: "Your connection status" },
+  { command: "disconnect",   description: "Disconnect wallet" },
+  { command: "help",         description: "Full command list" },
+]).catch((e: any) => console.warn("setMyCommands:", e.message));
 
 // ─── Startup Health Check ────────────────────────────────────────────────────
 
