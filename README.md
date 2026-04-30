@@ -542,16 +542,16 @@ StellrFlow has onboarded **5 verified testnet users**. Each user independently c
 
 | # | Name | Wallet Address | Verified Transactions |
 |---|------|----------------|----------------------|
-| 1 | User 1 | `GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1` | [View on Explorer](https://stellar.expert/explorer/testnet/account/GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX1) |
-| 2 | User 2 | `GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX2` | [View on Explorer](https://stellar.expert/explorer/testnet/account/GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX2) |
-| 3 | User 3 | `GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX3` | [View on Explorer](https://stellar.expert/explorer/testnet/account/GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX3) |
-| 4 | User 4 | `GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX4` | [View on Explorer](https://stellar.expert/explorer/testnet/account/GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX4) |
-| 5 | User 5 | `GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX5` | [View on Explorer](https://stellar.expert/explorer/testnet/account/GXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX5) |
+| 1 | User 1 | `GD7CWIDSVJDI3WNRNDARYAHKYESCSBVEHZE3OEF42OURPG3ZFNDYGKVA` | [View on Explorer](https://stellar.expert/explorer/testnet/account/GD7CWIDSVJDI3WNRNDARYAHKYESCSBVEHZE3OEF42OURPG3ZFNDYGKVA) |
+| 2 | User 2 | `GDXDPAF7EAARJN5PLY4THVPNTQKO3T6VQVGVAGGWZA6KOMMI2PNYB3AF` | [View on Explorer](https://stellar.expert/explorer/testnet/account/GDXDPAF7EAARJN5PLY4THVPNTQKO3T6VQVGVAGGWZA6KOMMI2PNYB3AF) |
+| 3 | User 3 | `GDC75RV23FIDVJH4DW6CJG75NFRFYDBMH3G2GC6RSDY4F4HUOPJUAUGM` | [View on Explorer](https://stellar.expert/explorer/testnet/account/GDC75RV23FIDVJH4DW6CJG75NFRFYDBMH3G2GC6RSDY4F4HUOPJUAUGM) |
+| 4 | User 4 | `GDMMUNM3P6WENQ4SDI2K3MMVUSCAY22ZCCVOKL6RYOBOXYOXWW7F7FOZ` | [View on Explorer](https://stellar.expert/explorer/testnet/account/GDMMUNM3P6WENQ4SDI2K3MMVUSCAY22ZCCVOKL6RYOBOXYOXWW7F7FOZ) |
+| 5 | User 5 | `GBUCJUXO3SUDYULLU5MLXK2E266EPONWLWTAPA6T4CCTLFGIKBTNBFXV` | [View on Explorer](https://stellar.expert/explorer/testnet/account/GBUCJUXO3SUDYULLU5MLXK2E266EPONWLWTAPA6T4CCTLFGIKBTNBFXV) |
 
 > Replace placeholder addresses with real wallet public keys collected via the onboarding form. Each address should have at least one Horizon-visible transaction confirming real usage.
 
 **Onboarding Form:** [https://forms.gle/gEFaZV9n891Mwrg7A](https://forms.gle/gEFaZV9n891Mwrg7A)  
-**Feedback Sheet:** [docs/user-feedback.xlsx](docs/user-feedback.xlsx) *(updated after each cohort)*
+**Feedback Sheet:** [docs/user-feedback.xlsx]([docs/user-feedback.xlsx](https://docs.google.com/spreadsheets/d/1UvTgh-4CDv0y96iM_of8Mm3Oe-KQS0PxkSHJTfzdS_o/edit?usp=sharing)) *(updated after each cohort)*
 
 ---
 
@@ -596,7 +596,7 @@ This section documents how specific user feedback translated into concrete produ
 
 Follow StellrFlow for updates, workflow templates, and Stellar automation tips:
 
-**Twitter / X:** [TWITTER_LINK](TWITTER_LINK) *(link will be added)*
+**Twitter / X:** [TWITTER_LINK]([TWITTER_LINK](https://x.com/DIVZZZ007/status/2049718903425884315?s=20)) *(link will be added)*
 
 Join the conversation — share workflows you've built, suggest new node types, or report bugs via the [onboarding form](https://forms.gle/gEFaZV9n891Mwrg7A).
 
