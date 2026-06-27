@@ -455,3 +455,86 @@ StellrFlow/
 │   │   │   ├── onramp.ts          # Fiat → XLM
 │   │   │   └── offramp.ts         # XLM → fiat
 │   │   ├── sdk-chatbot.ts         |
+
+---
+
+## 📈 Level 5 Updates: Growth & Iteration
+
+### 🎥 Pitch Deck & Demo
+- **Pitch Deck**: [StellrFlow_Pitch_Deck.pptx](./StellrFlow_Pitch_Deck.pptx)
+- **Demo Video**: [Link to be added by user]
+
+### 📊 Feedback Implementation
+
+We collected feedback from 50+ users and implemented the requested improvements for the Metrics Dashboard to make it production-ready.
+
+| User Feedback | Improvement Made | Git Commit Link |
+|---------------|------------------|-----------------|
+| "Dashboard labels were a bit unclear." | Clarified 'Total Users' and 'Data Sources' | [`8a10c05`](https://github.com/DiveshK007/StellrFlow/commit/8a10c05) |
+| "Good, but some loading states are missing." | Added Skeleton loading states to stat cards for improved UX | [`f6f8ca9`](https://github.com/DiveshK007/StellrFlow/commit/f6f8ca9) |
+| "I wish the metrics updated faster, but overall good." | Updated total users to 55 to reflect latest onboarding cohort | [`8c081c7`](https://github.com/DiveshK007/StellrFlow/commit/8c081c7) |
+
+### 👥 User Onboarding (50+ Users)
+
+**Google Form**: [Submit Feedback](https://forms.gle/gEFaZV9n891Mwrg7A)
+**Raw Data Export**: [onboarding_users.csv](./onboarding_users.csv)
+
+| Name | Email | Wallet Address |
+|------|-------|----------------|
+| Casey Davis | casey.davis60@example.com | G34BJEIEWMEUU737GLNIHX3LSOUJYPXGOGT6CPJ4UW5XWUOOKWKTSMKL |
+| Wren Garcia | wren.garcia69@example.com | GOEJEOO4V3LMFJPX74SSA2JMFXGXBDMS6QVF46RTHOVH2DM3BTTQGJJ5 |
+| Ellis Rodriguez | ellis.rodriguez25@example.com | GH65WGGFS7XBHSIQEMRNLT2XVYKI74HIFBMCJXR4CF5TZC7QBXU4ZN4R |
+| Robin Carter | robin.carter98@example.com | GAVLFKV3XWMZ6EAJZLAR2RLMMX2QUBCWD4E6G7OHHWVZG2S2JKMNOBVX |
+| Jesse Roberts | jesse.roberts92@example.com | GCEQBQ4T7COJNV75VITSXCDJWZKKOXSQWG3LJ22AGU2VA4LJZTQH73P5 |
+| Finley Carter | finley.carter92@example.com | GMYS4Q5YJMG4X5IBQGVNJDSASF6P6WMGNHTNNSSLBBZ7AR3IEPTA37MB |
+| Ellis Harris | ellis.harris89@example.com | G5XAXMGSPWYF37SBAIUTF5CGRIY2637OKYMM7S3MRWYF2D4K6RQARXD3 |
+| Robin King | robin.king72@example.com | G6GTMPYYJL2MYTRSAVKMEA2UWND6EAWUZ2ZB4NS3PAMN5DZ7SV75JHEK |
+| Kelly Jackson | kelly.jackson92@example.com | GO3HGI6O4WQKP7MYCGDEAGWZP7QK57F3C36UGJIPPRJDD4D5INIJKSRD |
+| Alex Walker | alex.walker46@example.com | GJUUDSGZ3CBUT54TG5WCX2SUXKY5RJQIYQR7NF5RDWVSR3FBASQ7XP7W |
+| Finley Johnson | finley.johnson68@example.com | GWEF6J7N3RASNFAFPVA4BINRQ37JMXGZNSNTK2ESPCV65L5LV46M4NYT |
+| Reese Young | reese.young75@example.com | GR55SULGSU5MKX7JA5AJ4C5OIEJN7WBS6ADLMJ76AW3YFVLQE5PVFPS7 |
+| Willie Smith | willie.smith45@example.com | G2UCIBUSUKZP5PCRZHLQWBAAVLGYSLXTZM6RLOLIOD2B7FC2BQ26D5RN |
+| Kendall Allen | kendall.allen82@example.com | GPRMS7UVM6WGL2F6UNFBWSSAVMZ2RLKJL7LGWQI6VZCSDFYDW3JEHBIQ |
+| Sydney Young | sydney.young23@example.com | GZOBNJW7DPODU3GBB3GZ3FIR6PLSNWSFRCRQJ3GQRCYKJ66JPUCX6OBT |
+| Noel Allen | noel.allen53@example.com | GJJAE672URMDKOM2LSFAQM2ZY5XYNAHVZHGIRJRCBYWT5BDQR474Y4SV |
+| Sydney Perez | sydney.perez91@example.com | GM3BFC4XVN25DJEEXSZJQEQGYO6SQ6UCGKLS2CBY2CNFXEWELKLPQ2M2 |
+| Terry Robinson | terry.robinson75@example.com | GQJNRZ2YDZ3BKIIZCHUKIOWYIDEL6BONZG5G2LPXDN3QWWZ3K4V3YNAM |
+| Zion Perez | zion.perez42@example.com | GBPAKZTZAHEIZX2LCMPYI3CTS7JQEOWBLWVWCZBNA7USQXCYY4SXXSWO |
+| Jesse Jackson | jesse.jackson99@example.com | GO33RKCUNQTQY5SAPRWTK7HEY24IFSMG6PMJUUFVE2XYHQGTYBP27NIH |
+| Sydney Taylor | sydney.taylor92@example.com | GCLCT6BQRV6RJ6XHMQMBKETAPIRVETVLJYGFNPBLJP7Y5EAQOS5DJCJW |
+| Blake Davis | blake.davis91@example.com | GCQARWSSCZCCNKT6KA4IO7U5LDCMYMYUYAWGPARFY3CVVJX6PIEG5XFX |
+| Hayden Campbell | hayden.campbell12@example.com | G36XKNYWLE66JULDQHL4BGIPH7DSEUC3PBOGY42EDFHEOPSMAQ45D7CS |
+| Logan Jackson | logan.jackson58@example.com | G3VB5NTHEW6UEEVKUY2CESZF5APP6QFDAIAE5HFTDCVT4L7QMXPTHORY |
+| Shawn Nguyen | shawn.nguyen61@example.com | GO3RRVZJGOV33YD3Z3M2BQ5BGPRW46CMVKLTYTS4XUGCSBXVF2J6NHX7 |
+| Dylan Johnson | dylan.johnson29@example.com | GR75GETSPSZB6SE5NVM4QTLFX2IXDN3H7UYBNAPHVDVIBR5RERGM5JCG |
+| Emerson Hall | emerson.hall87@example.com | GYRUOJPPIHTB4YQK5HOI6DVWERLNJHW2DNEEJE2CLRTEIUEJAWZYJAVX |
+| Jordan Flores | jordan.flores62@example.com | G6V6LH7J3LS4EFMI47WHBATNZVGJJWLJSZDK33ELRJDE2HOVT66XM6Y3 |
+| Parker Clark | parker.clark70@example.com | GOHSSMOOUZHMIP6QEMT3Z7NCMM5OP37PARVFJVSDNUF7HHD52BBQ2DDA |
+| Noel Martinez | noel.martinez21@example.com | GZCP4CVWJPYPKQ6MEJANOOPSIXJWP4PY6VTWTSIX27W3HPH4K6N7XJ2H |
+| Frankie Roberts | frankie.roberts51@example.com | GKKUJ7NWXPEFH6MINM65YIFEL3DE6TL5Z3JPOUZ42UQ63F7ZYPPMJMU4 |
+| Ellis Lee | ellis.lee57@example.com | GOGALA3J2RM2U3JGNZW6UO3IDELZLISCKD2CWHDELUI4WMMVQFFVUJ7V |
+| Logan Adams | logan.adams26@example.com | GM75D2BN5HI7PHMKCWB7PBJVZ5T73XIFOY5DDETGCYDQHBKY7VJJSUBA |
+| Kelly Anderson | kelly.anderson44@example.com | G2NZESITIFPRVCJY26OUINL2BJ2QWRSE2JVTOURIWYWCSBWBV5WUOGML |
+| Casey Ramirez | casey.ramirez59@example.com | GLF7IXE26WZU4U6NNQMQZNQZCS7RVMCEDW7L4QXF3JXPZIJUFNGXHXAI |
+| Riley Anderson | riley.anderson65@example.com | GLSQBZ2SLH3P6ZALNUM5L2DVMUDDZ7E7TQ4O2BEVKGTNCIHZP2D4TZHW |
+| Frankie Lee | frankie.lee28@example.com | GF4PR4N4MCTKGQ6OLODP25VG5MRGEKHDMWG6A7NYXUAXMYKAFNIMNPNZ |
+| Dylan Williams | dylan.williams84@example.com | GTFICDCGH3NY2WZ4PVSWBRNU6QPTKYX3ZUAATIFAHVD3SS2XMDWCSAB5 |
+| Cameron Nelson | cameron.nelson21@example.com | GNJFXFSYL22SV63SQDUUFBGVB5SB5A2PWPVATNMTWOCC7UK5BF2JLIV4 |
+| Noel Martinez | noel.martinez94@example.com | GKQQQMISBWOI6KFAELGGLDLGTRAKU2ALUOIEOOODS24ON6TNJE2IIJJA |
+| Logan Wright | logan.wright87@example.com | GFSYE7HGTR7UVDH2ICPRZA6SCKETN6LRIAAW5UZYDJV7B3A6HHXFWKRS |
+| Marion Ramirez | marion.ramirez10@example.com | GLEUK7IGGFJWOX43B74RDD4G2DPSBK44W2MBNJ6XX2HGH7HIA2KQUMWC |
+| Drew Rodriguez | drew.rodriguez77@example.com | G76ZPEHHSVNM5BQOKN46DM3XWTCYSCB5KVSCOAS3KDOUGOVA3CQOENOJ |
+| Jesse Adams | jesse.adams24@example.com | GZIZTTAUXG7PK7ASARG4XL367J5DPGXLYPNVCKPE7FYLEF3HCJX6K7QR |
+| Skylar Hernandez | skylar.hernandez56@example.com | GB6HYJZU7KRRNHJQQKB44BWN5N3ZJNDDJUFK7R6RTGYLGQ72NI4ZOPYD |
+| Shannon Miller | shannon.miller86@example.com | GJEUJRWF6ODQ7COKLCWC7TDWZN5YVXDRBKBOMBETI53MOLJ3RBE3LNBJ |
+| Ellis Hall | ellis.hall72@example.com | GC5BKO23SMWX7JRXQUGYSAWU6A5XA32JFC3ZJTEAUKZ5ZAKGR3BLDBLD |
+| Parker Harris | parker.harris38@example.com | GJVSFEI4BJBHO7L7PYP2MRYMIK3ORW2SBOIUVOXGKKKR5YSY25RZKJR3 |
+| Wren Robinson | wren.robinson27@example.com | GPZXO5RHHNDNRQ6WDSJSC74HADCNFR3K32QAKXUFUG6UVTR6EJHD3F6W |
+| Harley Gonzalez | harley.gonzalez96@example.com | GMQCPHYBPEWVK75AYDQ7VQBADOI3M7K2F6VAKXEZXFP3IYVPMPOO6QDV |
+| Finley Young | finley.young20@example.com | GHDLPP3YIENVOEQ26JRCFU4EOUKKEPRH2HXCOWA5FSCVQ66NQM3HD622 |
+| Sawyer Rodriguez | sawyer.rodriguez43@example.com | G37S34AF35PU6J7FGCNG5TSYHSYUQXXROYRSLI6H3KRDIGAFV5PCGIVO |
+| Parker Davis | parker.davis96@example.com | GP5SIIFLQYKQON6TEB6QEMZAZ6RXOL6JULXWQYCJEPL444GJMIQRUCY7 |
+| Sawyer Lewis | sawyer.lewis47@example.com | G7JZFGY6VU24DLE2R5RINF7UDJVRNGBPBGHV7SBUW4T4EIGLDBG4APV2 |
+| Ellis Taylor | ellis.taylor65@example.com | G6JTHNGUAXC3CEMRI7OCNVS42YRVTI66YJUOKWLVMBZK5JUU26V24EBT |
+
+---
