@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   BarChart,
   Bar,
@@ -367,7 +368,11 @@ export default function MetricsPage() {
               </CardHeader>
               <CardContent className="px-4 pb-4">
                 <div className="text-3xl font-bold text-foreground">
-                  {typeof stat.value === "number" ? stat.value.toLocaleString() : stat.value}
+                  {txLoading ? (
+                    <Skeleton className="h-9 w-20" />
+                  ) : (
+                    typeof stat.value === "number" ? stat.value.toLocaleString() : stat.value
+                  )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{stat.sub}</p>
               </CardContent>
