@@ -348,8 +348,8 @@ export default function MetricsPage() {
         {/* Start info note block */}
         <div className="bg-muted p-4 rounded-lg flex flex-col md:flex-row items-center justify-between text-sm text-muted-foreground border">
           <div>
-            <span className="font-semibold text-foreground mr-1">Data Sources & Methodology:</span>
-            <span>Total / Active Users are derived from historical dataset. Live metrics & transactions use Stellar Horizon API & session tracking.</span>
+            <span className="font-semibold text-foreground mr-1">Data Sources:</span>
+            <span>Total users from onboarding dataset. Live metrics from Horizon API and runtime tracking.</span>
           </div>
         </div>
         {/* End info note block */}
