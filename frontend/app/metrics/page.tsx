@@ -257,7 +257,7 @@ export default function MetricsPage() {
     },
     {
       title: "Total Users",
-      value: 33,           
+      value: 55,           
       sub:   "historical registered accounts",
       icon:  <Users className="h-4 w-4" />,
       color: "text-green-400",
