@@ -36,7 +36,7 @@ import {
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const HORIZON_URL = "https://horizon-testnet.stellar.org";
+const HORIZON_URL = "https://horizon.stellar.org";
 const BOT_WALLET  = "GCEZWKCA5VLDNRLN3RPRJMRZOX3Z6G5CHCGKWD36ONSTNXABUABT56UQ";
 const CONTRACT_ID = "CBATLCK3E5SDUWTGS6SGB7NSDL6KF4EG7DTRI2KIX5TWNQVZSNUYIUMO";
 const STELLAR_EXPERT = "https://stellar.expert/explorer/testnet";
