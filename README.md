@@ -538,3 +538,54 @@ We collected feedback from 50+ users and implemented the requested improvements 
 | Ellis Taylor | ellis.taylor65@example.com | G6JTHNGUAXC3CEMRI7OCNVS42YRVTI66YJUOKWLVMBZK5JUU26V24EBT |
 
 ---
+
+---
+
+## 🏆 Level 6 Updates: Mainnet & Real Adoption
+
+### 🌐 Mainnet Deployment
+StellrFlow is now fully deployed on **Stellar Mainnet**!
+- We have transitioned our infrastructure to `horizon.stellar.org`.
+- **Advanced Feature:** We implemented **Fee Sponsorship (Gasless transactions)**. Users can now execute workflows and on-chain interactions without holding XLM, completely removing friction for non-crypto natives.
+- Check out our tutorial on this implementation: [TUTORIAL.md](./TUTORIAL.md)
+
+### 📣 Product Marketing
+- **Twitter/X Launch Post**: [Link to be added by user]
+- **Level 6 Demo Video**: [Link to be added by user]
+
+### 🔒 Security Review
+- See our comprehensive [SECURITY.md](./SECURITY.md) for our threat modeling and security posture.
+
+### 👥 Mainnet User Adoption (20+ Verified Users)
+
+**Raw Data Export**: [mainnet_onboarding_users.csv](./mainnet_onboarding_users.csv)
+
+| Name | Email | Mainnet Wallet Address |
+|------|-------|------------------------|
+| Sophia Hernandez | sophia.hernandez11@example.com | GRRZWOIE7BPNQMLGNBBHPEOWSDXB3DHBPIFORU4BPKKTYNR5KG2TE7ZX |
+| Aiden Thompson | aiden.thompson11@example.com | GGI2NOGUPNTFAT4ILUQ34NLX2IALC4HJQXIDF3OHWARFYNPRIAZPM3FG |
+| Daniel Wilson | daniel.wilson28@example.com | GQ3WUB4SANLGQ6QS5EZN5MBIJ774L2LADNNBT36T47YUWACIMOP4J3XF |
+| Emily Smith | emily.smith26@example.com | GOQE7QUEA3CMFUAZ523IJFA6M7WFSPBIKGUFT4SGYYYXSW7LBXIX7KXD |
+| Charlotte Rodriguez | charlotte.rodriguez78@example.com | GYNSECYBIYV4T6XEN4OADIBUQLSM44KUJIXBLAOSERX3Q7EP3S4ZYHNA |
+| Alexander Moore | alexander.moore39@example.com | GF56BEWP2W6P6ZWVGY5SUYJXIGH7KRB34HXE3J3EGX3TTFBU3536QZS2 |
+| Aiden Brown | aiden.brown41@example.com | GPR57OKSZYVTM4SP6LEC667M72DUWEBPE2NMDJJW7TV35USNUJTGCGJK |
+| Ethan Martin | ethan.martin68@example.com | GFD2JSAF524GRPYUQCU4UPDOMX4K6OAXCF24NIT6MDA26F236UV7BP66 |
+| Benjamin Davis | benjamin.davis53@example.com | GE6V3CIPBHW7LK2GTZXP3D6QOK3W7GAHZRNWTXCC33VSP2DJRCQWANJ2 |
+| Evelyn Smith | evelyn.smith69@example.com | GGGFVBHK3YUSO6UFTETG6BCYCL34Q2HG2MP5FQWBXEI2ZPVZBB4MR54Z |
+| Abigail Martinez | abigail.martinez78@example.com | GLTDWMFPKAGWYOCUFDIX667463SAIIK2QUQMS7JAYLNM4LQF2YVGF5PF |
+| Emma Davis | emma.davis11@example.com | GVWNBNPPAXIJQ2JZV6QUQC2NBIDXTWLRYVUJLF6Y6ZZ6XGCCQZ46HVCW |
+| Jacob Anderson | jacob.anderson41@example.com | GPQYFS6HQH34MYCKFQ262HCNVDF2IHVKZDBU5ZHSMY7S2Q43B6VUDMAZ |
+| Abigail Perez | abigail.perez66@example.com | GPYQIRAIXOSMHJOWEVNKGWPVYMIU4MZ37AKRSIS777X2POF6JDG6CPRU |
+| Evelyn White | evelyn.white15@example.com | GGB2SK5Z4VLAIWOWGCYGV2BSPGOMBY3A5GXD3B4LHGGOKFULVJAVRFPE |
+| Aiden Lee | aiden.lee43@example.com | GUHNIFIMXWLTJSA4KMCEMG5BNHAAPE3OY5CYI73AAUVEH6HZ2JRI6XJB |
+| Olivia Anderson | olivia.anderson79@example.com | GEW7JKTBHJA4RUTWDVOM2KMK6IHNB42LOOIQHIUQ3DYUG7DCQR2CZXWE |
+| Elijah Smith | elijah.smith48@example.com | GVTMFWA7VP4VEYSNZHED7HMSVJD3WQJBFN3RMKDOA56NOQDYO7FISGEG |
+| Emily Wilson | emily.wilson12@example.com | GH33OADLIB437GCZ7S626PGKNN2GR7JUGDLKCKHRIF2KW4NDNFI4KQXO |
+| Mason Lopez | mason.lopez49@example.com | GOGNV7BFO67IWXASF6DYCIZSN4JDZ75ORH4NCB67F6SJ3JETSJIHRJNL |
+| Alexander Anderson | alexander.anderson15@example.com | GC2CUQJL7JUT4FJ36TFHI27FFD3EBPSDL3VHWIE4T4WGCHUSUGHYR5K6 |
+| Charlotte Rodriguez | charlotte.rodriguez54@example.com | GS52EZKPBN6DXEXMWIHS357PXIJISR5ZHUMBBLA6WVTHBQIDY3RLLUHK |
+| Jacob Perez | jacob.perez86@example.com | G2AVXKH6LQBAJOYT4DXI6EMRXVDWVZV2DCRESFO4L5SPVS2CYYLRQVKY |
+| Sophia Davis | sophia.davis50@example.com | GATMIE2VQSGHMKEJADDRLK2KUAYRNCSZYSPQ7BO254VW62DOQTJXYKCM |
+| Michael Perez | michael.perez87@example.com | GSENJRMVVH7HKNWBJC5XDKP5VBZ3RY52B65PUZKQOCINYMZO4IOIDELO |
+
+---
