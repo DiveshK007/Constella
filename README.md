@@ -462,7 +462,7 @@ StellrFlow/
 
 ### 🎥 Pitch Deck & Demo
 - **Pitch Deck**: [StellrFlow_Pitch_Deck.pptx](./StellrFlow_Pitch_Deck.pptx)
-- **Demo Video**: [Link to be added by user]
+- **Demo Video**: [Watch the full demo walkthrough](https://drive.google.com/file/d/1Bpd0j19UQHI7uDELugcD40GTXHxeFfjB/view?usp=drive_link)
 
 ### 📊 Feedback Implementation
 
@@ -550,8 +550,8 @@ StellrFlow is now fully deployed on **Stellar Mainnet**!
 - Check out our tutorial on this implementation: [TUTORIAL.md](./TUTORIAL.md)
 
 ### 📣 Product Marketing
-- **Twitter/X Launch Post**: [Link to be added by user]
-- **Level 6 Demo Video**: [Link to be added by user]
+- **Twitter/X Launch Post**: [View Post](https://x.com/DIVZZZ007/status/2071512568888545451?s=20)
+- **Level 6 Demo Video**: [Watch the full demo walkthrough](https://drive.google.com/file/d/1Bpd0j19UQHI7uDELugcD40GTXHxeFfjB/view?usp=drive_link)
 
 ### 🔒 Security Review
 - See our comprehensive [SECURITY.md](./SECURITY.md) for our threat modeling and security posture.
