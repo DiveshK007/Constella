@@ -187,12 +187,12 @@ export const stellarApi = {
     }
   },
 
-  sendTelegram: async (chatId: string, message: string) => {
+  sendTelegram: async (chatId: string, message: string, parseMode?: string) => {
     try {
       const response = await fetch(`${STELLAR_BOT_URL}/api/telegram/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chatId, message }),
+        body: JSON.stringify({ chatId, message, parseMode }),
       });
       const data = await response.json();
       return data.success ? { success: true } : { success: false, error: data.error };
@@ -356,7 +356,9 @@ export const nodeExecutors = {
       message = message.replace(/\{address\}/g, address);
     }
 
-    const result = await stellarApi.sendTelegram(chatId, message || "Notification from StellrFlow");
+    const formattedMessage = `🔔 <b>StellrFlow Notification</b>\n\n${message || "Notification from StellrFlow"}`;
+
+    const result = await stellarApi.sendTelegram(chatId, formattedMessage, "HTML");
 
     if (!result.success) {
       throw new Error(result.error || "Failed to send message");

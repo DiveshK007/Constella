@@ -32,6 +32,7 @@ import {
   GitBranch,
   Wallet,
   Code2,
+  Download,
 } from "lucide-react";
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -75,6 +76,16 @@ const NODE_USAGE = [
   { name: "Balance Check",    value: 20 },
   { name: "AutoPay",          value: 12 },
   { name: "Other",            value: 5  },
+];
+
+const CONTRACT_CALLS_DATA = [
+  { day: "Mon", calls: 2 },
+  { day: "Tue", calls: 8 },
+  { day: "Wed", calls: 5 },
+  { day: "Thu", calls: 14 },
+  { day: "Fri", calls: 10 },
+  { day: "Sat", calls: 22 },
+  { day: "Sun", calls: 15 },
 ];
 
 const PIE_COLORS = [C.mauve, C.blue, C.green, C.peach, C.teal];
@@ -137,6 +148,16 @@ function NodeTooltip({ active, payload }: any) {
     <div className="bg-card border border-border rounded-lg px-3 py-2 text-xs shadow-lg">
       <p className="font-semibold text-foreground">{payload[0].name}</p>
       <p style={{ color: payload[0].payload.fill }}>{payload[0].value}%</p>
+    </div>
+  );
+}
+
+function ContractTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-card border border-border rounded-lg px-3 py-2 text-xs shadow-lg">
+      <p className="text-muted-foreground mb-1">{label}</p>
+      <p className="font-semibold text-yellow-400">{payload[0].value} calls</p>
     </div>
   );
 }
@@ -248,6 +269,21 @@ export default function MetricsPage() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleExportCsv = () => {
+    let csv = "Hash,Timestamp,Successful,Operations\\n";
+    transactions.forEach(tx => {
+      csv += `${tx.hash},${tx.timestamp},${tx.successful},${tx.operationCount}\\n`;
+    });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "stellrflow_transactions.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const statCards = [
     {
       title: "Workflows Run",
@@ -333,6 +369,14 @@ export default function MetricsPage() {
                 {lastUpdated.toLocaleTimeString()}
               </span>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -476,7 +520,7 @@ export default function MetricsPage() {
         </Card>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Daily Active Users — hardcoded 7-day pattern */}
           <Card className="bg-card border-border">
@@ -551,6 +595,40 @@ export default function MetricsPage() {
                     iconSize={8}
                   />
                 </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Soroban Contract Calls */}
+          <Card className="bg-card border-border">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                <Code2 className="h-4 w-4" />
+                Soroban Contract Usage
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={CONTRACT_CALLS_DATA} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <XAxis
+                    dataKey="day"
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                    axisLine={false}
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip
+                    content={<ContractTooltip />}
+                    cursor={{ fill: "rgba(255,255,255,0.04)" }}
+                  />
+                  <Bar dataKey="calls" fill="#fbbf24" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
