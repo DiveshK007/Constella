@@ -34,13 +34,12 @@ import {
   Code2,
   Download,
 } from "lucide-react";
+import { HORIZON_URL, STELLAR_EXPERT_URL as STELLAR_EXPERT } from "@/lib/stellar-network";
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
-const HORIZON_URL = "https://horizon.stellar.org";
 const BOT_WALLET  = "GCEZWKCA5VLDNRLN3RPRJMRZOX3Z6G5CHCGKWD36ONSTNXABUABT56UQ";
 const CONTRACT_ID = "CBATLCK3E5SDUWTGS6SGB7NSDL6KF4EG7DTRI2KIX5TWNQVZSNUYIUMO";
-const STELLAR_EXPERT = "https://stellar.expert/explorer/testnet";
 
 // ── Fallback values shown immediately and whenever Horizon is unreachable ────
 // These are realistic testnet figures; replaced by live data on successful fetch.
