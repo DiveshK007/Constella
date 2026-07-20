@@ -7,11 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Send, CheckCircle2, AlertCircle, Loader2, ArrowRight } from "lucide-react";
-import {
-  isConnected,
-  getAddress,
-  signTransaction,
-} from "@stellar/freighter-api";
+import { getStoredAddress, isWalletConnected, signWithKit } from "@/lib/wallet-kit";
 
 const STELLAR_BOT_URL = process.env.NEXT_PUBLIC_STELLAR_BOT_URL || "http://localhost:3003";
 
@@ -28,38 +24,22 @@ export default function SendTransactionPage() {
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [freighterInstalled, setFreighterInstalled] = useState<boolean | null>(null);
+  const [walletConnected, setWalletConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const checkFreighter = async () => {
-      try {
-        await new Promise((r) => setTimeout(r, 500));
-        const result = await isConnected();
-
-        if (result.isConnected) {
-          setFreighterInstalled(true);
-          try {
-            const addressResult = await getAddress();
-            if (addressResult.address) {
-              setPublicKey(addressResult.address);
-            }
-          } catch (e) {
-            console.log("Could not get address:", e);
-          }
-        } else {
-          setFreighterInstalled(false);
-        }
-      } catch (e) {
-        setFreighterInstalled(false);
-      }
-    };
-
-    checkFreighter();
+    // The wallet is chosen on the connect page; here we reuse the stored address.
+    const stored = getStoredAddress();
+    if (stored) {
+      setPublicKey(stored);
+      setWalletConnected(true);
+    } else {
+      setWalletConnected(false);
+    }
   }, []);
 
   const sendTransaction = async () => {
     if (!destination || !amount || !publicKey) {
-      setError("Please fill in all fields and connect Freighter");
+      setError("Please fill in all fields and connect a wallet");
       return;
     }
 
@@ -92,23 +72,20 @@ export default function SendTransactionPage() {
 
       setStatus("signing");
 
-      // Step 2: Sign with Freighter
-      const signResult = await signTransaction(buildResult.xdr, {
+      // Step 2: Sign with the connected wallet (Freighter / Albedo / xBull)
+      const signedXdr = await signWithKit(buildResult.xdr, {
         networkPassphrase: network === "testnet"
           ? "Test SDF Network ; September 2015"
           : "Public Global Stellar Network ; September 2015",
+        address: publicKey,
       });
-
-      if (signResult.error) {
-        throw new Error(signResult.error.message || "Failed to sign transaction");
-      }
 
       // Step 3: Submit signed transaction
       const submitResponse = await fetch(`${STELLAR_BOT_URL}/api/transaction/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          signedXdr: signResult.signedTxXdr,
+          signedXdr,
           chatId,
           network,
         }),
@@ -164,23 +141,23 @@ export default function SendTransactionPage() {
           </div>
           <CardTitle className="text-2xl">Send XLM</CardTitle>
           <CardDescription>
-            Sign and send a transaction with your Freighter wallet
+            Sign and send a transaction with your connected wallet
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {freighterInstalled === null ? (
+          {walletConnected === null ? (
             <div className="flex flex-col items-center justify-center py-8 gap-2">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Detecting Freighter...</p>
+              <p className="text-sm text-muted-foreground">Checking wallet...</p>
             </div>
-          ) : freighterInstalled === false ? (
+          ) : walletConnected === false ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2 p-4 rounded-lg bg-yellow-500/10 text-yellow-500">
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <p className="text-sm">Freighter wallet extension not detected</p>
+                <p className="text-sm">No wallet connected yet</p>
               </div>
-              <Button onClick={() => window.open("https://www.freighter.app/", "_blank")} className="w-full">
-                Install Freighter
+              <Button onClick={() => (window.location.href = "/connect-wallet")} className="w-full">
+                Connect a Wallet
               </Button>
             </div>
           ) : status === "success" ? (
@@ -262,7 +239,7 @@ export default function SendTransactionPage() {
                 ) : status === "signing" ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Sign in Freighter...
+                    Sign in your wallet...
                   </>
                 ) : (
                   <>
@@ -274,7 +251,7 @@ export default function SendTransactionPage() {
               </Button>
 
               <p className="text-xs text-center text-muted-foreground">
-                Network: {network} • You'll be prompted to sign in Freighter
+                Network: {network} • You'll be prompted to sign in your wallet
               </p>
             </div>
           )}

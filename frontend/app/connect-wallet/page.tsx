@@ -1,60 +1,55 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import {
-  isConnected,
-  getAddress,
-  getNetwork,
-  isAllowed,
-  setAllowed,
-  requestAccess,
-} from "@stellar/freighter-api";
+  connectWallet,
+  getKitNetwork,
+  getStoredAddress,
+  isWalletConnected,
+} from "@/lib/wallet-kit";
 import { capture } from "@/lib/posthog";
 
 const STELLAR_BOT_URL = process.env.NEXT_PUBLIC_STELLAR_BOT_URL || "http://localhost:3003";
 
+/** Normalise a wallet-reported network string to the backend's enum. */
+function normalizeNetwork(raw: string | null): "testnet" | "mainnet" {
+  return (raw || "").toUpperCase().includes("PUBLIC") ? "mainnet" : "testnet";
+}
+
 export default function ConnectWalletPage() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const chatId = searchParams.get("chatId");
 
   const [status, setStatus] = useState<"idle" | "connecting" | "connected" | "error">("idle");
   const [publicKey, setPublicKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [freighterInstalled, setFreighterInstalled] = useState<boolean | null>(null);
 
-  // Register wallet with backend and send confirmation to Telegram
-  const registerWalletWithBackend = async (key: string, network: string) => {
-    // Fires on both the auto-detect and manual-connect paths (both call this).
+  // Register wallet with backend and send confirmation to Telegram.
+  const registerWalletWithBackend = async (key: string, network: "testnet" | "mainnet") => {
+    // Fires for every wallet type the kit can connect (Freighter/Albedo/xBull).
     capture("wallet_connected", { network });
 
     if (!chatId) return;
 
-    // Register the Freighter wallet with the backend
     try {
       const registerResponse = await fetch(`${STELLAR_BOT_URL}/api/freighter/connect`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chatId,
-          publicKey: key,
-          network: network.toLowerCase(),
-        }),
+        body: JSON.stringify({ chatId, publicKey: key, network }),
       });
       const registerResult = await registerResponse.json();
-      console.log("Freighter registration result:", registerResult);
+      console.log("Wallet registration result:", registerResult);
     } catch (e) {
-      console.error("Failed to register Freighter wallet:", e);
+      console.error("Failed to register wallet:", e);
     }
 
-    // Send confirmation message to Telegram
     const message =
-      `✅ *Freighter Wallet Connected!*\n\n` +
-      `🦊 *Address:*\n\`${key}\`\n\n` +
+      `✅ *Wallet Connected!*\n\n` +
+      `*Address:*\n\`${key}\`\n\n` +
       `🌐 *Network:* ${network}\n\n` +
       `*Available Commands:*\n` +
       `/mybalance - Check your wallet balance\n` +
@@ -64,123 +59,48 @@ export default function ConnectWalletPage() {
       `/status - View your wallet status`;
 
     try {
-      const sendResponse = await fetch(`${STELLAR_BOT_URL}/api/telegram/send`, {
+      await fetch(`${STELLAR_BOT_URL}/api/telegram/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId, message, parseMode: "Markdown" }),
       });
-      const sendResult = await sendResponse.json();
-      console.log("Telegram message result:", sendResult);
     } catch (e) {
       console.error("Failed to send Telegram message:", e);
     }
   };
 
+  const finishConnected = async (address: string) => {
+    setPublicKey(address);
+    setStatus("connected");
+    const network = normalizeNetwork(await getKitNetwork());
+    await registerWalletWithBackend(address, network);
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 3000);
+  };
+
+  // Auto-reconnect if a wallet was connected in a previous session.
   useEffect(() => {
-    // Check if Freighter is installed
-    const checkFreighter = async () => {
-      try {
-        // Wait a bit for extension to inject
-        await new Promise((r) => setTimeout(r, 500));
-
-        const result = await isConnected();
-
-        if (result.isConnected) {
-          setFreighterInstalled(true);
-
-          // Check if already allowed
-          const allowedResult = await isAllowed();
-          if (allowedResult.isAllowed) {
-            try {
-              const addressResult = await getAddress();
-              if (addressResult.address) {
-                setPublicKey(addressResult.address);
-                setStatus("connected");
-
-                // Also register with backend (auto-detected wallet)
-                let network = "TESTNET";
-                try {
-                  const networkResult = await getNetwork();
-                  network = networkResult.network || "TESTNET";
-                } catch (e) {
-                  console.log("Could not get network:", e);
-                }
-                await registerWalletWithBackend(addressResult.address, network);
-
-                // Auto-redirect after 3 seconds
-                setTimeout(() => {
-                  window.location.href = "/";
-                }, 3000);
-              }
-            } catch (e) {
-              console.log("Could not get address:", e);
-            }
-          }
-        } else {
-          setFreighterInstalled(false);
-        }
-      } catch (e) {
-        console.log("Freighter check error:", e);
-        setFreighterInstalled(false);
-      }
-    };
-
-    checkFreighter();
+    if (isWalletConnected()) {
+      const stored = getStoredAddress();
+      if (stored) void finishConnected(stored);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const connectWallet = async () => {
+  const handleConnect = async () => {
     setStatus("connecting");
     setError(null);
-
     try {
-      // First check if connected
-      const connectedResult = await isConnected();
-      if (!connectedResult.isConnected) {
-        throw new Error("Freighter is not installed or not accessible.");
-      }
-
-      // Request access (this prompts the user and returns address)
-      const accessResult = await requestAccess();
-
-      if (accessResult.error) {
-        throw new Error(accessResult.error.message || "Failed to get access");
-      }
-
-      if (!accessResult.address) {
-        throw new Error("No address returned. Please approve the connection in Freighter.");
-      }
-
-      let network = "TESTNET";
-      try {
-        const networkResult = await getNetwork();
-        network = networkResult.network || "TESTNET";
-      } catch (e) {
-        console.log("Could not get network:", e);
-      }
-
-      setPublicKey(accessResult.address);
-      setStatus("connected");
-
-      // Register with backend and notify Telegram
-      await registerWalletWithBackend(accessResult.address, network);
-
-      // Auto-redirect to dashboard after 3 seconds
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 3000);
+      // Opens the kit's picker showing Freighter, Albedo and xBull.
+      const { address } = await connectWallet();
+      if (!address) throw new Error("No address returned from wallet.");
+      await finishConnected(address);
     } catch (err) {
       console.error("Wallet connection error:", err);
       setError(err instanceof Error ? err.message : "Failed to connect wallet. Please try again.");
       setStatus("error");
     }
-  };
-
-  const installFreighter = () => {
-    window.open("https://www.freighter.app/", "_blank");
-  };
-
-  const refreshPage = () => {
-    window.location.reload();
   };
 
   return (
@@ -192,32 +112,11 @@ export default function ConnectWalletPage() {
           </div>
           <CardTitle className="text-2xl">Connect Wallet</CardTitle>
           <CardDescription>
-            Connect your Freighter wallet to interact with Stellar via Telegram
+            Connect Freighter, Albedo, or xBull to interact with Stellar
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {freighterInstalled === null ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-2">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Detecting Freighter...</p>
-            </div>
-          ) : freighterInstalled === false ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 p-4 rounded-lg bg-yellow-500/10 text-yellow-500">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <p className="text-sm">Freighter wallet extension not detected</p>
-              </div>
-              <Button onClick={installFreighter} className="w-full">
-                Install Freighter
-              </Button>
-              <Button onClick={refreshPage} variant="outline" className="w-full">
-                I already installed it - Refresh
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                Make sure Freighter is enabled in your browser extensions
-              </p>
-            </div>
-          ) : status === "connected" ? (
+          {status === "connected" ? (
             <div className="space-y-4">
               <div className="flex items-center gap-2 p-4 rounded-lg bg-green-500/10 text-green-500">
                 <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
@@ -231,10 +130,7 @@ export default function ConnectWalletPage() {
               <p className="text-sm text-center text-muted-foreground">
                 Redirecting to dashboard in 3 seconds...
               </p>
-              <Button
-                onClick={() => window.location.href = "/"}
-                className="w-full"
-              >
+              <Button onClick={() => (window.location.href = "/")} className="w-full">
                 Go to Dashboard →
               </Button>
               {chatId && (
@@ -249,7 +145,7 @@ export default function ConnectWalletPage() {
                 <AlertCircle className="w-5 h-5 flex-shrink-0" />
                 <p className="text-sm">{error}</p>
               </div>
-              <Button onClick={connectWallet} className="w-full">
+              <Button onClick={handleConnect} className="w-full">
                 Try Again
               </Button>
             </div>
@@ -260,30 +156,29 @@ export default function ConnectWalletPage() {
                   Connecting wallet for Telegram chat
                 </p>
               )}
-              <Button
-                onClick={connectWallet}
-                className="w-full"
-                disabled={status === "connecting"}
-              >
+              <Button onClick={handleConnect} className="w-full" disabled={status === "connecting"}>
                 {status === "connecting" ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Connecting...
+                    Choose a wallet...
                   </>
                 ) : (
                   <>
                     <Wallet className="w-4 h-4 mr-2" />
-                    Connect Freighter
+                    Connect Wallet
                   </>
                 )}
               </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Supports Freighter, Albedo and xBull.
+              </p>
             </div>
           )}
 
           <div className="pt-4 border-t">
             <p className="text-xs text-center text-muted-foreground">
               By connecting, you allow StellrFlow to request transaction signatures.
-              Your private keys never leave Freighter.
+              Your private keys never leave your wallet.
             </p>
           </div>
         </CardContent>
