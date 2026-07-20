@@ -19,18 +19,6 @@
 
 ---
 
-## ⚡ For the Judges
-
-- **Fully deployed and live** — The app, bot, and Soroban contract are all running on Stellar Testnet right now. Every claim is verifiable on-chain.
-- **33 real users, 90+ on-chain transactions** — Users independently connected wallets, executed workflows, and sent XLM. Every transaction is queryable on Stellar Explorer. Wallet addresses are in the [User Onboarding](#-user-onboarding) section.
-- **Three layers of blockchain interaction** — Direct XLM transfers via Horizon API, gasless fee-bump transactions via Stellar's native fee sponsorship (verified on-chain), and immutable execution logging via a deployed Soroban contract.
-- **52 passing tests, CI green** — Automated test suite covers all Stellar SDK operations and edge cases. CI badge above reflects the current build status.
-- **Feedback-driven iteration** — Two documented improvement cycles driven by real user sessions. See [Feedback → Improvements](#-feedback--improvements).
-- **Production-grade advanced features** — Fee sponsorship (gasless UX), threshold multisig approval flows, and SEP-24 anchor integration are all implemented and functional — not just scaffolded.
-- **Demo-ready today** — Live app, live metrics, live bot, live contract. See [Demo Day Readiness](#-demo-day-readiness).
-
----
-
 ## 🌐 Live Demo
 
 **[https://stellr-flow-6rcr.vercel.app](https://stellr-flow-6rcr.vercel.app)**
@@ -45,31 +33,10 @@ Live transaction feed pulled from the Stellar Horizon testnet API, charts for da
 
 ---
 
-## 📊 Project Metrics Snapshot
-
-> All figures reflect real on-chain and in-app activity as of submission date. Transaction counts are independently verifiable via Stellar Horizon and StellarExpert.
-
-| Metric | Value |
-|--------|-------|
-| **Total Verified Users** | **33** — each completed wallet connect + ≥1 on-chain action |
-| **Total On-Chain Transactions** | **90+** (Horizon-verifiable, conservative estimate) |
-| **Active Users (last 7 days)** | **~20** — tracked via `/api/metrics` |
-| **Soroban Contract Invocations** | Logged via WorkflowRegistry on [StellarExpert](https://stellar.expert/explorer/testnet/contract/CBATLCK3E5SDUWTGS6SGB7NSDL6KF4EG7DTRI2KIX5TWNQVZSNUYIUMO) |
-| **Workflow Executions** | Tracked live on the [metrics dashboard](https://stellr-flow-6rcr.vercel.app/metrics) |
-| **Test Coverage** | 52 tests, 100% pass rate |
-| **API Endpoints** | 25+ across wallet, anchor, multisig, autopay, and bot modules |
-| **Bot Commands** | 20 registered commands via `setMyCommands()` |
-
-> **How users are counted:** Each unique wallet address registered via `/register` or the Freighter connect flow is counted as one verified user. Addresses are stored by the bot API and surfaced via `GET /api/users/addresses`.
-
----
-
 ## 📖 Table of Contents
 
-- [For the Judges](#-for-the-judges)
 - [Live Demo](#-live-demo)
 - [Metrics Dashboard](#-metrics-dashboard)
-- [Project Metrics Snapshot](#-project-metrics-snapshot)
 - [About](#-about)
 - [Screenshots](#-screenshots)
 - [Demo Video](#-demo-video)
@@ -455,165 +422,13 @@ StellrFlow/
 │   │   │   ├── onramp.ts          # Fiat → XLM
 │   │   │   └── offramp.ts         # XLM → fiat
 │   │   ├── sdk-chatbot.ts         |
+```
 
 ---
 
-## 📈 Level 5 Updates: Growth & Iteration
+## User Feedback
 
-### 🎥 Pitch Deck & Demo
-- **Pitch Deck**: [StellrFlow_Pitch_Deck.pptx](./StellrFlow_Pitch_Deck.pptx)
-- **Demo Video**: [Watch the full demo walkthrough](https://drive.google.com/file/d/1Bpd0j19UQHI7uDELugcD40GTXHxeFfjB/view?usp=drive_link)
+- **Feedback form:** https://forms.gle/gEFaZV9n891Mwrg7A
+- **Responses:** https://docs.google.com/spreadsheets/d/1UvTgh-4CDv0y96iM_of8Mm3Oe-KQS0PxkSHJTfzdS_o/edit?gid=1548551072
 
-### 📊 Feedback Implementation
-
-We collected feedback from 50+ users and implemented the requested improvements for the Metrics Dashboard to make it production-ready.
-
-| User Feedback | Improvement Made | Git Commit Link |
-|---------------|------------------|-----------------|
-| "Dashboard labels were a bit unclear." | Clarified 'Total Users' and 'Data Sources' | [`8a10c05`](https://github.com/DiveshK007/StellrFlow/commit/8a10c05) |
-| "Good, but some loading states are missing." | Added Skeleton loading states to stat cards for improved UX | [`f6f8ca9`](https://github.com/DiveshK007/StellrFlow/commit/f6f8ca9) |
-| "I wish the metrics updated faster, but overall good." | Updated total users to 55 to reflect latest onboarding cohort | [`8c081c7`](https://github.com/DiveshK007/StellrFlow/commit/8c081c7) |
-
-### 👥 User Onboarding (50+ Users)
-
-**Google Form**: [Submit Feedback](https://forms.gle/gEFaZV9n891Mwrg7A)
-**Raw Data Export**: [onboarding_users.csv](./onboarding_users.csv)
-
-| Name | Email | Wallet Address |
-|------|-------|----------------|
-| Casey Davis | casey.davis60@example.com | G34BJEIEWMEUU737GLNIHX3LSOUJYPXGOGT6CPJ4UW5XWUOOKWKTSMKL |
-| Wren Garcia | wren.garcia69@example.com | GOEJEOO4V3LMFJPX74SSA2JMFXGXBDMS6QVF46RTHOVH2DM3BTTQGJJ5 |
-| Ellis Rodriguez | ellis.rodriguez25@example.com | GH65WGGFS7XBHSIQEMRNLT2XVYKI74HIFBMCJXR4CF5TZC7QBXU4ZN4R |
-| Robin Carter | robin.carter98@example.com | GAVLFKV3XWMZ6EAJZLAR2RLMMX2QUBCWD4E6G7OHHWVZG2S2JKMNOBVX |
-| Jesse Roberts | jesse.roberts92@example.com | GCEQBQ4T7COJNV75VITSXCDJWZKKOXSQWG3LJ22AGU2VA4LJZTQH73P5 |
-| Finley Carter | finley.carter92@example.com | GMYS4Q5YJMG4X5IBQGVNJDSASF6P6WMGNHTNNSSLBBZ7AR3IEPTA37MB |
-| Ellis Harris | ellis.harris89@example.com | G5XAXMGSPWYF37SBAIUTF5CGRIY2637OKYMM7S3MRWYF2D4K6RQARXD3 |
-| Robin King | robin.king72@example.com | G6GTMPYYJL2MYTRSAVKMEA2UWND6EAWUZ2ZB4NS3PAMN5DZ7SV75JHEK |
-| Kelly Jackson | kelly.jackson92@example.com | GO3HGI6O4WQKP7MYCGDEAGWZP7QK57F3C36UGJIPPRJDD4D5INIJKSRD |
-| Alex Walker | alex.walker46@example.com | GJUUDSGZ3CBUT54TG5WCX2SUXKY5RJQIYQR7NF5RDWVSR3FBASQ7XP7W |
-| Finley Johnson | finley.johnson68@example.com | GWEF6J7N3RASNFAFPVA4BINRQ37JMXGZNSNTK2ESPCV65L5LV46M4NYT |
-| Reese Young | reese.young75@example.com | GR55SULGSU5MKX7JA5AJ4C5OIEJN7WBS6ADLMJ76AW3YFVLQE5PVFPS7 |
-| Willie Smith | willie.smith45@example.com | G2UCIBUSUKZP5PCRZHLQWBAAVLGYSLXTZM6RLOLIOD2B7FC2BQ26D5RN |
-| Kendall Allen | kendall.allen82@example.com | GPRMS7UVM6WGL2F6UNFBWSSAVMZ2RLKJL7LGWQI6VZCSDFYDW3JEHBIQ |
-| Sydney Young | sydney.young23@example.com | GZOBNJW7DPODU3GBB3GZ3FIR6PLSNWSFRCRQJ3GQRCYKJ66JPUCX6OBT |
-| Noel Allen | noel.allen53@example.com | GJJAE672URMDKOM2LSFAQM2ZY5XYNAHVZHGIRJRCBYWT5BDQR474Y4SV |
-| Sydney Perez | sydney.perez91@example.com | GM3BFC4XVN25DJEEXSZJQEQGYO6SQ6UCGKLS2CBY2CNFXEWELKLPQ2M2 |
-| Terry Robinson | terry.robinson75@example.com | GQJNRZ2YDZ3BKIIZCHUKIOWYIDEL6BONZG5G2LPXDN3QWWZ3K4V3YNAM |
-| Zion Perez | zion.perez42@example.com | GBPAKZTZAHEIZX2LCMPYI3CTS7JQEOWBLWVWCZBNA7USQXCYY4SXXSWO |
-| Jesse Jackson | jesse.jackson99@example.com | GO33RKCUNQTQY5SAPRWTK7HEY24IFSMG6PMJUUFVE2XYHQGTYBP27NIH |
-| Sydney Taylor | sydney.taylor92@example.com | GCLCT6BQRV6RJ6XHMQMBKETAPIRVETVLJYGFNPBLJP7Y5EAQOS5DJCJW |
-| Blake Davis | blake.davis91@example.com | GCQARWSSCZCCNKT6KA4IO7U5LDCMYMYUYAWGPARFY3CVVJX6PIEG5XFX |
-| Hayden Campbell | hayden.campbell12@example.com | G36XKNYWLE66JULDQHL4BGIPH7DSEUC3PBOGY42EDFHEOPSMAQ45D7CS |
-| Logan Jackson | logan.jackson58@example.com | G3VB5NTHEW6UEEVKUY2CESZF5APP6QFDAIAE5HFTDCVT4L7QMXPTHORY |
-| Shawn Nguyen | shawn.nguyen61@example.com | GO3RRVZJGOV33YD3Z3M2BQ5BGPRW46CMVKLTYTS4XUGCSBXVF2J6NHX7 |
-| Dylan Johnson | dylan.johnson29@example.com | GR75GETSPSZB6SE5NVM4QTLFX2IXDN3H7UYBNAPHVDVIBR5RERGM5JCG |
-| Emerson Hall | emerson.hall87@example.com | GYRUOJPPIHTB4YQK5HOI6DVWERLNJHW2DNEEJE2CLRTEIUEJAWZYJAVX |
-| Jordan Flores | jordan.flores62@example.com | G6V6LH7J3LS4EFMI47WHBATNZVGJJWLJSZDK33ELRJDE2HOVT66XM6Y3 |
-| Parker Clark | parker.clark70@example.com | GOHSSMOOUZHMIP6QEMT3Z7NCMM5OP37PARVFJVSDNUF7HHD52BBQ2DDA |
-| Noel Martinez | noel.martinez21@example.com | GZCP4CVWJPYPKQ6MEJANOOPSIXJWP4PY6VTWTSIX27W3HPH4K6N7XJ2H |
-| Frankie Roberts | frankie.roberts51@example.com | GKKUJ7NWXPEFH6MINM65YIFEL3DE6TL5Z3JPOUZ42UQ63F7ZYPPMJMU4 |
-| Ellis Lee | ellis.lee57@example.com | GOGALA3J2RM2U3JGNZW6UO3IDELZLISCKD2CWHDELUI4WMMVQFFVUJ7V |
-| Logan Adams | logan.adams26@example.com | GM75D2BN5HI7PHMKCWB7PBJVZ5T73XIFOY5DDETGCYDQHBKY7VJJSUBA |
-| Kelly Anderson | kelly.anderson44@example.com | G2NZESITIFPRVCJY26OUINL2BJ2QWRSE2JVTOURIWYWCSBWBV5WUOGML |
-| Casey Ramirez | casey.ramirez59@example.com | GLF7IXE26WZU4U6NNQMQZNQZCS7RVMCEDW7L4QXF3JXPZIJUFNGXHXAI |
-| Riley Anderson | riley.anderson65@example.com | GLSQBZ2SLH3P6ZALNUM5L2DVMUDDZ7E7TQ4O2BEVKGTNCIHZP2D4TZHW |
-| Frankie Lee | frankie.lee28@example.com | GF4PR4N4MCTKGQ6OLODP25VG5MRGEKHDMWG6A7NYXUAXMYKAFNIMNPNZ |
-| Dylan Williams | dylan.williams84@example.com | GTFICDCGH3NY2WZ4PVSWBRNU6QPTKYX3ZUAATIFAHVD3SS2XMDWCSAB5 |
-| Cameron Nelson | cameron.nelson21@example.com | GNJFXFSYL22SV63SQDUUFBGVB5SB5A2PWPVATNMTWOCC7UK5BF2JLIV4 |
-| Noel Martinez | noel.martinez94@example.com | GKQQQMISBWOI6KFAELGGLDLGTRAKU2ALUOIEOOODS24ON6TNJE2IIJJA |
-| Logan Wright | logan.wright87@example.com | GFSYE7HGTR7UVDH2ICPRZA6SCKETN6LRIAAW5UZYDJV7B3A6HHXFWKRS |
-| Marion Ramirez | marion.ramirez10@example.com | GLEUK7IGGFJWOX43B74RDD4G2DPSBK44W2MBNJ6XX2HGH7HIA2KQUMWC |
-| Drew Rodriguez | drew.rodriguez77@example.com | G76ZPEHHSVNM5BQOKN46DM3XWTCYSCB5KVSCOAS3KDOUGOVA3CQOENOJ |
-| Jesse Adams | jesse.adams24@example.com | GZIZTTAUXG7PK7ASARG4XL367J5DPGXLYPNVCKPE7FYLEF3HCJX6K7QR |
-| Skylar Hernandez | skylar.hernandez56@example.com | GB6HYJZU7KRRNHJQQKB44BWN5N3ZJNDDJUFK7R6RTGYLGQ72NI4ZOPYD |
-| Shannon Miller | shannon.miller86@example.com | GJEUJRWF6ODQ7COKLCWC7TDWZN5YVXDRBKBOMBETI53MOLJ3RBE3LNBJ |
-| Ellis Hall | ellis.hall72@example.com | GC5BKO23SMWX7JRXQUGYSAWU6A5XA32JFC3ZJTEAUKZ5ZAKGR3BLDBLD |
-| Parker Harris | parker.harris38@example.com | GJVSFEI4BJBHO7L7PYP2MRYMIK3ORW2SBOIUVOXGKKKR5YSY25RZKJR3 |
-| Wren Robinson | wren.robinson27@example.com | GPZXO5RHHNDNRQ6WDSJSC74HADCNFR3K32QAKXUFUG6UVTR6EJHD3F6W |
-| Harley Gonzalez | harley.gonzalez96@example.com | GMQCPHYBPEWVK75AYDQ7VQBADOI3M7K2F6VAKXEZXFP3IYVPMPOO6QDV |
-| Finley Young | finley.young20@example.com | GHDLPP3YIENVOEQ26JRCFU4EOUKKEPRH2HXCOWA5FSCVQ66NQM3HD622 |
-| Sawyer Rodriguez | sawyer.rodriguez43@example.com | G37S34AF35PU6J7FGCNG5TSYHSYUQXXROYRSLI6H3KRDIGAFV5PCGIVO |
-| Parker Davis | parker.davis96@example.com | GP5SIIFLQYKQON6TEB6QEMZAZ6RXOL6JULXWQYCJEPL444GJMIQRUCY7 |
-| Sawyer Lewis | sawyer.lewis47@example.com | G7JZFGY6VU24DLE2R5RINF7UDJVRNGBPBGHV7SBUW4T4EIGLDBG4APV2 |
-| Ellis Taylor | ellis.taylor65@example.com | G6JTHNGUAXC3CEMRI7OCNVS42YRVTI66YJUOKWLVMBZK5JUU26V24EBT |
-
----
-
----
-
-## 🏆 Level 6 Updates: Mainnet & Real Adoption
-
-### 🌐 Mainnet Deployment
-StellrFlow is now fully deployed on **Stellar Mainnet**!
-- We have transitioned our infrastructure to `horizon.stellar.org`.
-- **Advanced Feature:** We implemented **Fee Sponsorship (Gasless transactions)**. Users can now execute workflows and on-chain interactions without holding XLM, completely removing friction for non-crypto natives.
-- Check out our tutorial on this implementation: [TUTORIAL.md](./TUTORIAL.md)
-
-### 📣 Product Marketing
-- **Twitter/X Launch Post**: [View Post](https://x.com/DIVZZZ007/status/2071512568888545451?s=20)
-- **Level 6 Demo Video**: [Watch the full demo walkthrough](https://drive.google.com/file/d/1Bpd0j19UQHI7uDELugcD40GTXHxeFfjB/view?usp=drive_link)
-
-### 🔒 Security Review
-- See our comprehensive [SECURITY.md](./SECURITY.md) for our threat modeling and security posture.
-
-### 👥 Mainnet User Adoption (20+ Verified Users)
-
-**Raw Data Export**: [mainnet_onboarding_users.csv](./mainnet_onboarding_users.csv)
-
-| Name | Email | Mainnet Wallet Address |
-|------|-------|------------------------|
-| Sophia Hernandez | sophia.hernandez11@example.com | GRRZWOIE7BPNQMLGNBBHPEOWSDXB3DHBPIFORU4BPKKTYNR5KG2TE7ZX |
-| Aiden Thompson | aiden.thompson11@example.com | GGI2NOGUPNTFAT4ILUQ34NLX2IALC4HJQXIDF3OHWARFYNPRIAZPM3FG |
-| Daniel Wilson | daniel.wilson28@example.com | GQ3WUB4SANLGQ6QS5EZN5MBIJ774L2LADNNBT36T47YUWACIMOP4J3XF |
-| Emily Smith | emily.smith26@example.com | GOQE7QUEA3CMFUAZ523IJFA6M7WFSPBIKGUFT4SGYYYXSW7LBXIX7KXD |
-| Charlotte Rodriguez | charlotte.rodriguez78@example.com | GYNSECYBIYV4T6XEN4OADIBUQLSM44KUJIXBLAOSERX3Q7EP3S4ZYHNA |
-| Alexander Moore | alexander.moore39@example.com | GF56BEWP2W6P6ZWVGY5SUYJXIGH7KRB34HXE3J3EGX3TTFBU3536QZS2 |
-| Aiden Brown | aiden.brown41@example.com | GPR57OKSZYVTM4SP6LEC667M72DUWEBPE2NMDJJW7TV35USNUJTGCGJK |
-| Ethan Martin | ethan.martin68@example.com | GFD2JSAF524GRPYUQCU4UPDOMX4K6OAXCF24NIT6MDA26F236UV7BP66 |
-| Benjamin Davis | benjamin.davis53@example.com | GE6V3CIPBHW7LK2GTZXP3D6QOK3W7GAHZRNWTXCC33VSP2DJRCQWANJ2 |
-| Evelyn Smith | evelyn.smith69@example.com | GGGFVBHK3YUSO6UFTETG6BCYCL34Q2HG2MP5FQWBXEI2ZPVZBB4MR54Z |
-| Abigail Martinez | abigail.martinez78@example.com | GLTDWMFPKAGWYOCUFDIX667463SAIIK2QUQMS7JAYLNM4LQF2YVGF5PF |
-| Emma Davis | emma.davis11@example.com | GVWNBNPPAXIJQ2JZV6QUQC2NBIDXTWLRYVUJLF6Y6ZZ6XGCCQZ46HVCW |
-| Jacob Anderson | jacob.anderson41@example.com | GPQYFS6HQH34MYCKFQ262HCNVDF2IHVKZDBU5ZHSMY7S2Q43B6VUDMAZ |
-| Abigail Perez | abigail.perez66@example.com | GPYQIRAIXOSMHJOWEVNKGWPVYMIU4MZ37AKRSIS777X2POF6JDG6CPRU |
-| Evelyn White | evelyn.white15@example.com | GGB2SK5Z4VLAIWOWGCYGV2BSPGOMBY3A5GXD3B4LHGGOKFULVJAVRFPE |
-| Aiden Lee | aiden.lee43@example.com | GUHNIFIMXWLTJSA4KMCEMG5BNHAAPE3OY5CYI73AAUVEH6HZ2JRI6XJB |
-| Olivia Anderson | olivia.anderson79@example.com | GEW7JKTBHJA4RUTWDVOM2KMK6IHNB42LOOIQHIUQ3DYUG7DCQR2CZXWE |
-| Elijah Smith | elijah.smith48@example.com | GVTMFWA7VP4VEYSNZHED7HMSVJD3WQJBFN3RMKDOA56NOQDYO7FISGEG |
-| Emily Wilson | emily.wilson12@example.com | GH33OADLIB437GCZ7S626PGKNN2GR7JUGDLKCKHRIF2KW4NDNFI4KQXO |
-| Mason Lopez | mason.lopez49@example.com | GOGNV7BFO67IWXASF6DYCIZSN4JDZ75ORH4NCB67F6SJ3JETSJIHRJNL |
-| Alexander Anderson | alexander.anderson15@example.com | GC2CUQJL7JUT4FJ36TFHI27FFD3EBPSDL3VHWIE4T4WGCHUSUGHYR5K6 |
-| Charlotte Rodriguez | charlotte.rodriguez54@example.com | GS52EZKPBN6DXEXMWIHS357PXIJISR5ZHUMBBLA6WVTHBQIDY3RLLUHK |
-| Jacob Perez | jacob.perez86@example.com | G2AVXKH6LQBAJOYT4DXI6EMRXVDWVZV2DCRESFO4L5SPVS2CYYLRQVKY |
-| Sophia Davis | sophia.davis50@example.com | GATMIE2VQSGHMKEJADDRLK2KUAYRNCSZYSPQ7BO254VW62DOQTJXYKCM |
-| Michael Perez | michael.perez87@example.com | GSENJRMVVH7HKNWBJC5XDKP5VBZ3RY52B65PUZKQOCINYMZO4IOIDELO |
-
----
-
----
-
-## 🏆 Level 7 Updates: Master Track (Founder Belt)
-
-### 📈 Sustainable Growth & Product Iteration
-StellrFlow has leveled up to focus on real product adoption, user retention, and ecosystem integration. 
-
-#### Product Improvements based on User Feedback:
-- **Dashboard Data Export**: Users can now export their transaction and growth data directly from the dashboard to CSV. ([See Commit](https://github.com/DIVZZZ007/StellrFlow))
-- **Enhanced Bot Notifications**: Replaced plain-text notifications with rich HTML formatting to make critical transaction details pop. ([See Commit](https://github.com/DIVZZZ007/StellrFlow))
-- **Soroban Contract Call Metrics**: Added a new chart in the dashboard to track smart contract interactions. ([See Commit](https://github.com/DIVZZZ007/StellrFlow))
-
-#### Growth Data & Analytics
-- We generated and onboarded 55 new Mainnet users.
-- **Raw Data Export**: [level7_user_feedback.csv](./level7_user_feedback.csv)
-- **Growth Analysis Report**: [GROWTH_REPORT.md](./GROWTH_REPORT.md)
-
-### 🔗 Ecosystem Integration
-We want other developers to build with StellrFlow.
-- **Ecosystem Integration Guide**: [ECOSYSTEM_INTEGRATION_GUIDE.md](./ECOSYSTEM_INTEGRATION_GUIDE.md)
-
-### 🚀 Live App & Socials
-- **Live Vercel Deployment**: [https://stellr-flow.vercel.app](https://stellr-flow.vercel.app) (Replace with real deployment link)
-- **StellrFlow Bot (Mainnet)**: [@StellrFlowBot](https://t.me/StellrFlowBot)
-- **X/Twitter Thread**: [View Launch Post](https://x.com/DIVZZZ007/status/2071512568888545451?s=20)
-
----
+32 verified testnet users onboarded (April 2026 cohort), wallet addresses verifiable on Stellar testnet.
