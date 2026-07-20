@@ -59,7 +59,7 @@ impl WorkflowRegistry {
             workflow_id: workflow_id.clone(),
             executor: executor.clone(),
             node_count,
-            status,
+            status: status.clone(),
             timestamp: env.ledger().timestamp(),
         };
 
@@ -72,6 +72,14 @@ impl WorkflowRegistry {
         env.storage()
             .persistent()
             .set(&COUNT_KEY, &execution_id);
+
+        // Emit a contract event so off-chain indexers (metrics dashboard, bots)
+        // can react to executions in real time. Topic: "execution";
+        // data: (workflow_id, executor, status).
+        env.events().publish(
+            (symbol_short!("execution"),),
+            (workflow_id.clone(), executor.clone(), status.clone()),
+        );
 
         log!(&env, "StellrFlow: workflow {} executed by {} (nodes: {}, success: {})",
             workflow_id, executor, node_count, success);
@@ -118,7 +126,7 @@ impl WorkflowRegistry {
 #[cfg(test)]
 mod test {
     use super::*;
-    use soroban_sdk::{testutils::Address as _, Env, String};
+    use soroban_sdk::{testutils::{Address as _, Events}, vec, IntoVal, Env, String};
 
     #[test]
     fn test_log_and_retrieve() {
@@ -133,6 +141,20 @@ mod test {
         // Log a successful execution
         let exec_id = client.log_execution(&executor, &wf_id, &3, &true);
         assert_eq!(exec_id, 1);
+
+        // Assert the "execution" contract event was emitted with
+        // (workflow_id, executor, status) as data.
+        assert_eq!(
+            env.events().all(),
+            vec![
+                &env,
+                (
+                    contract_id.clone(),
+                    (symbol_short!("execution"),).into_val(&env),
+                    (wf_id.clone(), executor.clone(), symbol_short!("success")).into_val(&env),
+                ),
+            ]
+        );
 
         // Retrieve it
         let exec = client.get_execution(&1).unwrap();
@@ -153,6 +175,20 @@ mod test {
 
         client.log_execution(&executor, &wf_id, &2, &true);
         client.log_execution(&executor, &wf_id, &4, &false);
+
+        // events().all() reflects the most recent invocation — the failed one,
+        // confirming the "failed" status path also emits the event.
+        assert_eq!(
+            env.events().all(),
+            vec![
+                &env,
+                (
+                    contract_id.clone(),
+                    (symbol_short!("execution"),).into_val(&env),
+                    (wf_id.clone(), executor.clone(), symbol_short!("failed")).into_val(&env),
+                ),
+            ]
+        );
 
         assert_eq!(client.get_count(), 2);
     }
