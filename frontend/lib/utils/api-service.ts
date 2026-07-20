@@ -5,6 +5,43 @@ const STELLAR_BOT_URL =
     process.env?.NEXT_PUBLIC_STELLAR_BOT_URL) ||
   "http://localhost:3003";
 
+/**
+ * fetch with an abort timeout and automatic retries. Retries transient network
+ * failures, timeouts and 5xx responses (with small backoff) so a slow or flaky
+ * bot backend fails fast and recovers instead of hanging; 4xx and successful
+ * responses are returned to the caller unchanged.
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  {
+    timeoutMs = 10000,
+    retries = 2,
+    retryDelayMs = 400,
+  }: { timeoutMs?: number; retries?: number; retryDelayMs?: number } = {},
+): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await globalThis.fetch(url, {
+        ...options,
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (res.status >= 500 && attempt < retries) {
+        lastError = new Error(`HTTP ${res.status}`);
+      } else {
+        return res;
+      }
+    } catch (err) {
+      lastError = err;
+    }
+    if (attempt < retries) {
+      await new Promise((r) => setTimeout(r, retryDelayMs * (attempt + 1)));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Request failed");
+}
+
 // ─── Response Types ─────────────────────────────────────────────────────────
 
 interface ApiResponse {
@@ -57,7 +94,7 @@ let isBotActive = false;
 // Telegram API - uses Stellar bot backend
 export const telegramApi = {
   sendMessage: async (chatId: string, message: string, parseMode: string = "Markdown") => {
-    const response = await fetch(`${STELLAR_BOT_URL}/api/telegram/send`, {
+    const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/telegram/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chatId, message, parseMode }),
@@ -130,7 +167,7 @@ export const telegramApi = {
   // Register session with enabled features
   registerSession: async (chatId: string, features: string[]) => {
     try {
-      const response = await fetch(`${STELLAR_BOT_URL}/api/session/register`, {
+      const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/session/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId, features }),
@@ -154,7 +191,7 @@ export const telegramApi = {
 
   getStatus: async () => {
     try {
-      const response = await fetch(`${STELLAR_BOT_URL}/api/telegram/health`);
+      const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/telegram/health`);
       const data = await response.json();
       return { success: data.status === "ok", ...data };
     } catch {
@@ -167,7 +204,7 @@ export const telegramApi = {
 export const stellarApi = {
   getBalance: async (address: string) => {
     try {
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `${STELLAR_BOT_URL}/api/stellar/balance/${encodeURIComponent(address)}`
       );
       const data = await response.json();
@@ -189,7 +226,7 @@ export const stellarApi = {
 
   sendTelegram: async (chatId: string, message: string, parseMode?: string) => {
     try {
-      const response = await fetch(`${STELLAR_BOT_URL}/api/telegram/send`, {
+      const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/telegram/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId, message, parseMode }),
@@ -206,7 +243,7 @@ export const stellarApi = {
 
   health: async () => {
     try {
-      const response = await fetch(`${STELLAR_BOT_URL}/api/telegram/health`);
+      const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/telegram/health`);
       const data = await response.json();
       return { ok: data.status === "ok", network: data.network };
     } catch {
@@ -220,7 +257,7 @@ export const telegramWalletApi = {
   // Create wallet for a chat
   createWallet: async (chatId: string) => {
     try {
-      const response = await fetch(`${STELLAR_BOT_URL}/api/wallet/create`, {
+      const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/wallet/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chatId }),
@@ -234,7 +271,7 @@ export const telegramWalletApi = {
   // Get wallet info
   getWallet: async (chatId: string) => {
     try {
-      const response = await fetch(`${STELLAR_BOT_URL}/api/wallet/${encodeURIComponent(chatId)}`);
+      const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/wallet/${encodeURIComponent(chatId)}`);
       if (!response.ok) {
         const data = await response.json();
         return { success: false, error: data.error || "Wallet not found" };
@@ -248,7 +285,7 @@ export const telegramWalletApi = {
   // Get wallet balance (uses the wallet's own address)
   getBalance: async (chatId: string) => {
     try {
-      const response = await fetch(`${STELLAR_BOT_URL}/api/wallet/${encodeURIComponent(chatId)}/balance`);
+      const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/wallet/${encodeURIComponent(chatId)}/balance`);
       return response.json();
     } catch (error) {
       return { success: false, error: "Failed to get balance" };
@@ -258,7 +295,7 @@ export const telegramWalletApi = {
   // Fund wallet (testnet only)
   fundWallet: async (chatId: string) => {
     try {
-      const response = await fetch(`${STELLAR_BOT_URL}/api/wallet/${encodeURIComponent(chatId)}/fund`, {
+      const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/wallet/${encodeURIComponent(chatId)}/fund`, {
         method: "POST",
       });
       return response.json();
@@ -270,7 +307,7 @@ export const telegramWalletApi = {
   // Send XLM from wallet
   sendXLM: async (chatId: string, destination: string, amount: string) => {
     try {
-      const response = await fetch(`${STELLAR_BOT_URL}/api/wallet/${encodeURIComponent(chatId)}/send`, {
+      const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/wallet/${encodeURIComponent(chatId)}/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ destination, amount }),
@@ -554,7 +591,7 @@ export const nodeExecutors = {
     const currency = cfgStr(config, "fiatCurrency") || "USD";
 
     // Call backend anchor deposit endpoint
-    const response = await fetch(`${STELLAR_BOT_URL}/api/anchor/deposit`, {
+    const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/anchor/deposit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chatId, amount, currency }),
@@ -602,7 +639,7 @@ export const nodeExecutors = {
     const currency = cfgStr(config, "fiatCurrency") || "USD";
 
     // Call backend anchor withdrawal endpoint
-    const response = await fetch(`${STELLAR_BOT_URL}/api/anchor/withdraw`, {
+    const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/anchor/withdraw`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chatId, xlmAmount, currency }),
@@ -657,7 +694,7 @@ export const nodeExecutors = {
     }
 
     // Call backend to set up scheduled payment
-    const response = await fetch(`${STELLAR_BOT_URL}/api/autopay/create`, {
+    const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/autopay/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chatId, destination, amount, interval, duration }),
@@ -717,7 +754,7 @@ export const nodeExecutors = {
     }
 
     // Call backend to set up multisig requirement
-    const response = await fetch(`${STELLAR_BOT_URL}/api/multisig/create`, {
+    const response = await fetchWithTimeout(`${STELLAR_BOT_URL}/api/multisig/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chatId, threshold, signers, timeout }),

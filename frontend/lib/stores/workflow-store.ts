@@ -253,6 +253,24 @@ function resultStr(result: NodeExecutionResult | undefined, key: string): string
   return typeof val === "string" ? val : val != null ? String(val) : "";
 }
 
+/**
+ * Run a node's direct children concurrently. A linear chain still executes in
+ * order (each node awaits its own children), but independent branches that fan
+ * out from the same node no longer block one another.
+ */
+function runChildren(
+  get: () => WorkflowState,
+  edges: WorkflowEdge[],
+  nodeId: string,
+  payload: NodeExecutionResult,
+): Promise<unknown> {
+  return Promise.all(
+    edges
+      .filter((e) => e.source === nodeId)
+      .map((e) => get().executeNode(e.target, payload))
+  );
+}
+
 export const getNodeDataFromType = (nodeType: string): NodeData | null => {
   for (const category of Object.values(NODE_TYPES)) {
     const item = category.items.find((item) => item.type === nodeType);
@@ -414,14 +432,19 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   setSelectedEdge: (edge) => set({ selectedEdge: edge }),
 
   startWorkflow: async () => {
+    const { nodes, edges } = get();
+
+    // Optimistic per-node progress: mark every node "pending" the instant Run is
+    // pressed, so the whole graph shows activity before any API call returns.
     set({
       isWorkflowRunning: true,
-      nodeExecutionState: {},
+      nodeExecutionState: Object.fromEntries(
+        nodes.map((n) => [n.id, "pending"] as const)
+      ) as WorkflowState["nodeExecutionState"],
       nodeResults: {},
       lastExecutionLog: { status: "idle" },
     });
 
-    const { nodes, edges } = get();
     const triggerNodes = nodes.filter(
       (node) => !edges.some((edge) => edge.target === node.id)
     );
@@ -524,9 +547,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
 
           // Only execute connected nodes if there are any
           if (connectedNodeIds.length > 0) {
-            for (const edge of edges.filter((e) => e.source === nodeId)) {
-              await get().executeNode(edge.target, payload);
-            }
+            await runChildren(get, edges, nodeId, payload);
           }
 
           result = payload;
@@ -553,9 +574,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
             mode: "chatbot",
           };
 
-          for (const edge of edges.filter((e) => e.source === nodeId)) {
-            await get().executeNode(edge.target, payload);
-          }
+          await runChildren(get, edges, nodeId, payload);
 
           result = payload;
           break;
@@ -575,9 +594,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
             },
           }));
 
-          for (const edge of edges.filter((e) => e.source === nodeId)) {
-            await get().executeNode(edge.target, { ...inputData, ...walletResult });
-          }
+          await runChildren(get, edges, nodeId, { ...inputData, ...walletResult });
 
           result = walletResult;
           break;
@@ -602,9 +619,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
             },
           }));
 
-          for (const edge of edges.filter((e) => e.source === nodeId)) {
-            await get().executeNode(edge.target, { ...inputData, ...sendResult });
-          }
+          await runChildren(get, edges, nodeId, { ...inputData, ...sendResult });
 
           result = sendResult;
           break;
@@ -626,9 +641,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
 
           const payload = { ...autopayResult, ...inputData };
 
-          for (const edge of edges.filter((e) => e.source === nodeId)) {
-            await get().executeNode(edge.target, payload);
-          }
+          await runChildren(get, edges, nodeId, payload);
 
           result = payload;
           break;
@@ -650,9 +663,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
 
           const payload = { ...multisigResult, ...inputData };
 
-          for (const edge of edges.filter((e) => e.source === nodeId)) {
-            await get().executeNode(edge.target, payload);
-          }
+          await runChildren(get, edges, nodeId, payload);
 
           result = payload;
           break;
@@ -668,9 +679,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
             },
           }));
           result = { success: true, delayed: delay };
-          for (const edge of edges.filter((e) => e.source === nodeId)) {
-            await get().executeNode(edge.target, { success: true, ...inputData, delayed: delay });
-          }
+          await runChildren(get, edges, nodeId, { success: true, ...inputData, delayed: delay });
           break;
         }
 
@@ -688,9 +697,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
             },
           }));
 
-          for (const edge of edges.filter((e) => e.source === nodeId)) {
-            await get().executeNode(edge.target, { ...inputData, ...onrampResult });
-          }
+          await runChildren(get, edges, nodeId, { ...inputData, ...onrampResult });
 
           result = onrampResult;
           break;
@@ -710,9 +717,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
             },
           }));
 
-          for (const edge of edges.filter((e) => e.source === nodeId)) {
-            await get().executeNode(edge.target, { ...inputData, ...offrampResult });
-          }
+          await runChildren(get, edges, nodeId, { ...inputData, ...offrampResult });
 
           result = offrampResult;
           break;

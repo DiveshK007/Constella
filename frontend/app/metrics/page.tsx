@@ -7,15 +7,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import dynamic from "next/dynamic";
 import {
   ArrowLeft,
   RefreshCw,
@@ -47,10 +39,16 @@ const BOT_WALLET = "GCEZWKCA5VLDNRLN3RPRJMRZOX3Z6G5CHCGKWD36ONSTNXABUABT56UQ";
 const TX_FETCH_LIMIT = 200;
 const NETWORK_LABEL = STELLAR_NETWORK === "mainnet" ? "Mainnet" : "Testnet";
 
-// ── Chart palette (Catppuccin Mocha) ─────────────────────────────────────────
-const C = {
-  mauve: "#cba6f7",
-};
+// recharts is heavy; load it lazily so it stays out of the metrics page's
+// initial bundle and only downloads once a chart actually renders.
+const TxBarChart = dynamic(() => import("@/components/metrics/tx-bar-chart"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center h-[220px] text-sm text-muted-foreground">
+      Loading chart…
+    </div>
+  ),
+});
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -118,20 +116,6 @@ function buildDailySeries(txs: TxRow[]): DayBucket[] {
     if (bucket) bucket.count++;
   }
   return days.map(({ day, count }) => ({ day, count }));
-}
-
-// ── Chart tooltip ─────────────────────────────────────────────────────────────
-
-function TxTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-card border border-border rounded-lg px-3 py-2 text-xs shadow-lg">
-      <p className="text-muted-foreground mb-1">{label}</p>
-      <p className="font-semibold" style={{ color: C.mauve }}>
-        {payload[0].value} tx
-      </p>
-    </div>
-  );
 }
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -456,25 +440,7 @@ export default function MetricsPage() {
                 No transactions in the last 7 days yet.
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={dailyTx} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis
-                    dataKey="day"
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                    axisLine={false}
-                    tickLine={false}
-                    allowDecimals={false}
-                  />
-                  <Tooltip content={<TxTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
-                  <Bar dataKey="count" fill={C.mauve} radius={[4, 4, 0, 0]} maxBarSize={40} />
-                </BarChart>
-              </ResponsiveContainer>
+              <TxBarChart data={dailyTx} />
             )}
           </CardContent>
         </Card>

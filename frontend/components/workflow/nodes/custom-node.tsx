@@ -4,7 +4,7 @@ import { Handle, Position, NodeProps } from "@reactflow/core";
 import { motion } from "framer-motion";
 import { NodeData, useWorkflowStore } from "@/lib/stores/workflow-store";
 import { getIconByName } from "@/lib/utils/icons";
-import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 
 export function CustomNode({ data, id, selected }: NodeProps<NodeData>) {
     const Icon = getIconByName(data.icon);
@@ -15,6 +15,10 @@ export function CustomNode({ data, id, selected }: NodeProps<NodeData>) {
 
     function renderStateIndicator() {
         switch (nodeState) {
+            case "pending":
+                return (
+                    <Clock className="h-4 w-4 text-muted-foreground animate-pulse" />
+                );
             case "running":
                 return (
                     <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
