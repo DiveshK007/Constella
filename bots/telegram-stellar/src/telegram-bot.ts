@@ -55,6 +55,7 @@ import {
   getLogForAddress,
 } from "./anchor/index.js";
 import { answerStellarQuestion } from "./sdk-chatbot.js";
+import { logExecutionWithSecret } from "./contractLogger.js";
 import QRCode from "qrcode";
 import {
   parseIntervalFormat,
@@ -93,6 +94,33 @@ const fmtXLM = (bal: string) => {
 
 // Pending send confirmations: chatId → { destAddress, amount, memo }
 const pendingSends = new Map<string, { destAddress: string; amount: number; memo?: string }>();
+
+/**
+ * Fire-and-forget: record a completed run on the WorkflowRegistry contract,
+ * signed by the user's in-bot wallet, then notify them of the on-chain record.
+ * Non-blocking — never awaited by callers and never throws into them; a failed
+ * contract call is only logged to the console, the triggering action still
+ * succeeds.
+ */
+function logRunOnChain(chatId: string, secret: string, workflowId: string, nodeCount: number): void {
+  logExecutionWithSecret({ secret, workflowId, nodeCount, success: true })
+    .then((r) => {
+      if (r.success && r.hash) {
+        bot
+          .sendMessage(
+            chatId,
+            `⛓️ <b>Logged on-chain</b>\n\n` +
+              `This run was recorded in the WorkflowRegistry contract.\n\n` +
+              `🔗 <a href="https://stellar.expert/explorer/${STELLAR_NETWORK}/tx/${esc(r.hash)}">View record</a>`,
+            { parse_mode: "HTML", disable_web_page_preview: true }
+          )
+          .catch(() => {});
+      } else {
+        console.error(`[contract-log] on-chain log failed for ${chatId}:`, r.error);
+      }
+    })
+    .catch((e) => console.error("[contract-log] unexpected error:", e));
+}
 
 // Active balance watchers: chatId → intervalId
 const balanceWatchers = new Map<string, ReturnType<typeof setInterval>>();
@@ -1239,6 +1267,9 @@ function initBot() {
         `\n🔗 <a href="https://stellar.expert/explorer/${STELLAR_NETWORK}/tx/${esc(result.hash)}">View on Explorer</a>`,
         { parse_mode: "HTML" }
       );
+
+      // Record this run on-chain (non-blocking — send already succeeded).
+      logRunOnChain(chatId, wallet.secretKey, "telegram-send", 1);
     } catch (err: any) {
       const bal = err?.response?.data?.extras?.result_codes?.operations?.[0];
       const hint = bal === "op_underfunded"
@@ -1976,6 +2007,9 @@ app.post("/api/wallet/:chatId/send", walletLimiter, validate(schemas.sendXLM), a
 
     transaction.sign(sourceKeypair);
     const result = await horizon.submitTransaction(transaction);
+
+    // Record this workflow-triggered run on-chain (non-blocking).
+    logRunOnChain(String(chatId), wallet.secretKey, "workflow-send", 1);
 
     return res.json({
       success: true,

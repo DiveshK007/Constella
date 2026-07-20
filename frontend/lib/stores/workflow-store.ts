@@ -31,6 +31,13 @@ export interface NodeExecutionResult {
   [key: string]: unknown;
 }
 
+export interface ExecutionLogState {
+  status: "idle" | "pending" | "success" | "error";
+  hash?: string;
+  explorerUrl?: string;
+  error?: string;
+}
+
 type WorkflowState = {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
@@ -42,6 +49,7 @@ type WorkflowState = {
     "pending" | "running" | "success" | "error"
   >;
   nodeResults: Record<string, NodeExecutionResult>;
+  lastExecutionLog: ExecutionLogState;
 
   setNodes: (nodes: WorkflowNode[]) => void;
   onNodesChange: (changes: ReactFlowNodeChange[]) => void;
@@ -66,6 +74,7 @@ type WorkflowState = {
   startWorkflow: () => Promise<void>;
   stopWorkflow: () => Promise<void>;
   executeNode: (nodeId: string, inputData?: NodeExecutionResult) => Promise<NodeExecutionResult>;
+  logRunOnChain: (nodeCount: number, success: boolean) => Promise<void>;
 
   saveWorkflow: () => void;
   loadWorkflow: () => void;
@@ -269,6 +278,7 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   isWorkflowRunning: false,
   nodeExecutionState: {},
   nodeResults: {},
+  lastExecutionLog: { status: "idle" },
 
   setNodes: (nodes) => set({ nodes }),
   onNodesChange: (changes) => {
@@ -397,26 +407,56 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
   setSelectedEdge: (edge) => set({ selectedEdge: edge }),
 
   startWorkflow: async () => {
+    set({
+      isWorkflowRunning: true,
+      nodeExecutionState: {},
+      nodeResults: {},
+      lastExecutionLog: { status: "idle" },
+    });
+
+    const { nodes, edges } = get();
+    const triggerNodes = nodes.filter(
+      (node) => !edges.some((edge) => edge.target === node.id)
+    );
+
     try {
-      set({
-        isWorkflowRunning: true,
-        nodeExecutionState: {},
-        nodeResults: {},
-      });
-
-      const { nodes, edges } = get();
-      const triggerNodes = nodes.filter(
-        (node) => !edges.some((edge) => edge.target === node.id)
-      );
-
-      for (const triggerNode of triggerNodes) {
-        get().executeNode(triggerNode.id);
-      }
+      // Await the whole graph — executeNode recurses into connected nodes.
+      await Promise.all(triggerNodes.map((t) => get().executeNode(t.id)));
     } catch (error) {
-      console.error("Error starting workflow:", error);
-      const msg = error instanceof Error ? error.message : "Unknown error";
-      toast.error(`Workflow failed: ${msg}`);
       set({ isWorkflowRunning: false });
+      throw error; // surfaced to the caller (nav-bar / builder)
+    }
+
+    set({ isWorkflowRunning: false });
+
+    // Workflow finished — record it on-chain. Non-blocking: a contract failure
+    // never fails the run (logRunOnChain never throws).
+    await get().logRunOnChain(nodes.length, true);
+  },
+
+  logRunOnChain: async (nodeCount, success) => {
+    set({ lastExecutionLog: { status: "pending" } });
+    try {
+      const { logWorkflowRun } = await import("@/lib/contract-logger");
+      const res = await logWorkflowRun({ workflowId: "workflow-run", nodeCount, success });
+      if (res.success) {
+        set({ lastExecutionLog: { status: "success", hash: res.hash, explorerUrl: res.explorerUrl } });
+        toast.success("Run logged on-chain", {
+          action: res.explorerUrl
+            ? { label: "View record", onClick: () => window.open(res.explorerUrl, "_blank") }
+            : undefined,
+        });
+      } else if (res.skipped) {
+        // No connected Freighter wallet — nothing to record, no error to show.
+        set({ lastExecutionLog: { status: "idle" } });
+      } else {
+        set({ lastExecutionLog: { status: "error", error: res.error } });
+        console.error("On-chain logging failed:", res.error);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "On-chain logging failed";
+      set({ lastExecutionLog: { status: "error", error: msg } });
+      console.error("On-chain logging error:", msg);
     }
   },
 

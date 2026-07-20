@@ -37,6 +37,7 @@ const config = {
   collectCoverageFrom: [
     'src/anchor/stellarService.ts',
     'src/interval-parser.ts',
+    'src/contractLogger.ts',
   ],
 
   // Show verbose output per test

@@ -49,6 +49,19 @@ export const schemas = {
     chatId: z.string().optional(),
   }),
 
+  logBuild: z.object({
+    executor: stellarAddress,
+    workflowId: z.string().min(1).max(64),
+    nodeCount: z.coerce.number().int().min(0).max(1000).optional().default(0),
+    success: z.boolean().optional().default(true),
+    network: z.enum(["testnet", "mainnet"]).optional(),
+  }),
+
+  logSubmit: z.object({
+    signedXdr: z.string().min(1, "signedXdr is required").max(20000),
+    network: z.enum(["testnet", "mainnet"]).optional(),
+  }),
+
   feeBump: z.object({
     innerTxXdr: z.string().min(1, "innerTxXdr is required").max(10000),
   }),

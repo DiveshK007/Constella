@@ -18,7 +18,7 @@ import { NodeTypesSidebar } from "./node-types-sidebar";
 import { PropertiesPanel } from "./properties-panel";
 import { CustomNode } from "./nodes/custom-node";
 import { Button } from "@/components/ui/button";
-import { Play, Square, Save, Download } from "lucide-react";
+import { Play, Square, Save, Download, ExternalLink, Loader2, Link2 } from "lucide-react";
 import "@reactflow/core/dist/style.css";
 
 const nodeTypes = {
@@ -51,6 +51,7 @@ function WorkflowCanvas() {
         stopWorkflow,
         saveWorkflow,
         loadWorkflow,
+        lastExecutionLog,
     } = useWorkflowStore();
 
     const reactFlowInstance = useReactFlow();
@@ -337,6 +338,43 @@ function WorkflowCanvas() {
                             </Button>
                         )}
                     </Panel>
+
+                    {/* On-chain record of the last run (WorkflowRegistry log_execution) */}
+                    {lastExecutionLog.status !== "idle" && (
+                        <Panel
+                            position="bottom-center"
+                            className="mb-4 px-3 py-2 bg-card rounded-lg border border-border shadow-md text-xs md:text-sm max-w-[92vw]"
+                        >
+                            {lastExecutionLog.status === "pending" && (
+                                <span className="flex items-center gap-2 text-muted-foreground">
+                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                    Recording run on-chain…
+                                </span>
+                            )}
+                            {lastExecutionLog.status === "success" && lastExecutionLog.explorerUrl && (
+                                <a
+                                    href={lastExecutionLog.explorerUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 text-primary hover:underline"
+                                >
+                                    <Link2 className="h-3.5 w-3.5 shrink-0" />
+                                    <span>Run logged on-chain</span>
+                                    {lastExecutionLog.hash && (
+                                        <span className="font-mono opacity-70">
+                                            {lastExecutionLog.hash.slice(0, 8)}…
+                                        </span>
+                                    )}
+                                    <ExternalLink className="h-3 w-3 shrink-0" />
+                                </a>
+                            )}
+                            {lastExecutionLog.status === "error" && (
+                                <span className="text-muted-foreground">
+                                    ⚠️ On-chain log skipped (run still succeeded)
+                                </span>
+                            )}
+                        </Panel>
+                    )}
                 </ReactFlow>
             </div>
 

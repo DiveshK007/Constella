@@ -15,6 +15,7 @@ import sessionRoutes from "./session.js";
 import adminRoutes from "./admin.js";
 import autopayRoutes from "./autopay.js";
 import multisigRoutes from "./multisig.js";
+import contractRoutes from "./contract.js";
 
 export function mountRoutes(app: Express, sendNotification: (chatId: string, message: string, opts?: { parseMode?: string; disableNotification?: boolean }) => Promise<boolean>) {
   // ─── Telegram messaging ─────────────────────────────────────────────
@@ -70,5 +71,6 @@ export function mountRoutes(app: Express, sendNotification: (chatId: string, mes
   app.use("/api/anchor", anchorRoutes);
   app.use("/api/autopay", autopayRoutes);
   app.use("/api/multisig", multisigRoutes);
+  app.use("/api/contract", contractRoutes);
   app.use("/api", adminRoutes);
 }
