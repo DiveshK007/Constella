@@ -12,6 +12,7 @@ import {
 } from "@reactflow/core";
 import "@reactflow/core/dist/style.css";
 import { toast } from "sonner";
+import { capture } from "@/lib/posthog";
 
 export type NodeConfig = Record<string, string | number | boolean | string[]>;
 
@@ -291,6 +292,9 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     const nodeData = getNodeDataFromType(nodeType);
     if (!nodeData) return;
 
+    // Adding the first node to an empty canvas = a new workflow was created.
+    const wasEmpty = get().nodes.length === 0;
+
     const newNode: WorkflowNode = {
       id: nanoid(),
       type: "customNode",
@@ -302,6 +306,9 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
       nodes: [...state.nodes, newNode],
       selectedNode: newNode,
     }));
+
+    if (wasEmpty) capture("workflow_created");
+    capture("node_added", { nodeType });
   },
 
   updateNodeData: (nodeId, data) => {
@@ -418,6 +425,8 @@ export const useWorkflowStore = create<WorkflowState>((set, get) => ({
     const triggerNodes = nodes.filter(
       (node) => !edges.some((edge) => edge.target === node.id)
     );
+
+    capture("workflow_executed", { nodeCount: nodes.length });
 
     try {
       // Await the whole graph — executeNode recurses into connected nodes.

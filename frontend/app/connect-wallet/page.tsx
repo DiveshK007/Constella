@@ -13,6 +13,7 @@ import {
   setAllowed,
   requestAccess,
 } from "@stellar/freighter-api";
+import { capture } from "@/lib/posthog";
 
 const STELLAR_BOT_URL = process.env.NEXT_PUBLIC_STELLAR_BOT_URL || "http://localhost:3003";
 
@@ -28,6 +29,9 @@ export default function ConnectWalletPage() {
 
   // Register wallet with backend and send confirmation to Telegram
   const registerWalletWithBackend = async (key: string, network: string) => {
+    // Fires on both the auto-detect and manual-connect paths (both call this).
+    capture("wallet_connected", { network });
+
     if (!chatId) return;
 
     // Register the Freighter wallet with the backend

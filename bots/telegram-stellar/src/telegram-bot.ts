@@ -61,10 +61,34 @@ import {
   parseIntervalFormat,
   formatIntervalForDisplay,
 } from "./interval-parser.js";
+import * as Sentry from "@sentry/node";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
+
+// ─── Error monitoring (Sentry) ────────────────────────────────────────────────
+// Initialised from SENTRY_DSN; a complete no-op when the DSN is unset, so the
+// bot runs identically without it.
+const SENTRY_ENABLED = Boolean(process.env.SENTRY_DSN);
+if (SENTRY_ENABLED) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.STELLAR_NETWORK || "development",
+    tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE) || 0.1,
+  });
+
+  process.on("unhandledRejection", (reason) => {
+    console.error("Unhandled rejection:", reason);
+    Sentry.captureException(reason);
+  });
+  process.on("uncaughtException", async (err) => {
+    console.error("Uncaught exception:", err);
+    Sentry.captureException(err);
+    await Sentry.flush(2000).catch(() => {});
+    process.exit(1);
+  });
+}
 
 // Configuration (state re-exports: STELLAR_NETWORK, HORIZON_URL, STELLAR_SECRET_KEY, ANCHOR_TREASURY_SECRET)
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
@@ -2713,6 +2737,14 @@ async function checkHorizonConnectivity(): Promise<void> {
     console.error("  Ensure the Stellar network is accessible from this environment");
   }
 }
+
+// Express error handler — reports any error surfaced via next(err) to Sentry.
+app.use((err: Error, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (SENTRY_ENABLED) Sentry.captureException(err);
+  console.error("Unhandled request error:", err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({ success: false, error: "Internal server error" });
+});
 
 async function startup() {
   await checkHorizonConnectivity();
