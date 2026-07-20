@@ -14,6 +14,7 @@ import {
   PanelRight,
   Workflow,
   Wallet,
+  BookOpen,
   Menu,
   X,
 } from "lucide-react";
@@ -107,6 +108,18 @@ export function NavBar() {
           </Button>
         </Link>
 
+        <Link href="/docs">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 border-muted-foreground/50 hover:bg-muted"
+            aria-label="Read the docs"
+          >
+            <BookOpen className="h-4 w-4" />
+            Docs
+          </Button>
+        </Link>
+
         <Link href="/metrics">
           <Button
             variant="outline"
@@ -154,6 +167,18 @@ export function NavBar() {
             >
               <Wallet className="h-4 w-4" />
               Connect Wallet
+            </Button>
+          </Link>
+
+          <Link href="/docs" onClick={() => setMobileMenuOpen(false)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-2 border-muted-foreground/50 hover:bg-muted justify-start"
+              aria-label="Read the docs"
+            >
+              <BookOpen className="h-4 w-4" />
+              Docs
             </Button>
           </Link>
 
