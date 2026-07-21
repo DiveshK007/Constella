@@ -3,7 +3,7 @@
  */
 
 import { Router } from "express";
-import { requireApiKey } from "../middleware/security.js";
+import { requireApiKey, requireAdminToken } from "../middleware/security.js";
 import {
   metrics,
   userWallets,
@@ -11,7 +11,9 @@ import {
   activeSessions,
   autoPaySchedules,
   STELLAR_NETWORK,
+  HORIZON_URL,
 } from "../state.js";
+import { collectUserRows, buildUsersCsv } from "../usersExport.js";
 
 const router = Router();
 
@@ -72,6 +74,25 @@ router.get("/users/addresses", requireApiKey, (_req, res) => {
   });
 
   res.json({ success: true, total: addresses.length, addresses });
+});
+
+// Export all registered users as CSV (admin only, ADMIN_TOKEN).
+// address, registered_at, source (bot|freighter), tx_count (live from Horizon).
+router.get("/users/export", requireAdminToken, async (_req, res) => {
+  try {
+    const rows = await collectUserRows({
+      botWallets: Array.from(userWallets.values()),
+      freighterWallets: Array.from(freighterWallets.values()),
+      horizonUrl: HORIZON_URL,
+    });
+    const csv = buildUsersCsv(rows);
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", 'attachment; filename="stellrflow_users.csv"');
+    return res.status(200).send(csv);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : "Export failed";
+    return res.status(500).json({ success: false, error: msg });
+  }
 });
 
 export default router;

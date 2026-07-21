@@ -91,6 +91,32 @@ export function requireApiKey(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+/**
+ * Simple bearer-token guard for the users export. Fails closed: if ADMIN_TOKEN
+ * is not configured the endpoint is disabled entirely, so real user data is
+ * never exposed by accident. The token is read per-request so it can be set at
+ * runtime (and in tests). Accepts `x-admin-token` or `Authorization: Bearer`.
+ */
+export function requireAdminToken(req: Request, res: Response, next: NextFunction) {
+  const adminToken = process.env.ADMIN_TOKEN || "";
+  if (!adminToken) {
+    return res.status(503).json({
+      success: false,
+      error: "Export disabled — ADMIN_TOKEN not configured",
+    });
+  }
+
+  const header = (req.headers["x-admin-token"] as string) || "";
+  const bearer = (req.headers["authorization"] as string)?.replace(/^Bearer\s+/i, "") || "";
+  const provided = header || bearer;
+
+  if (provided !== adminToken) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+
+  next();
+}
+
 // ─── Stellar Address Validation ─────────────────────────────────────────────
 
 const STELLAR_ADDRESS_REGEX = /^G[A-Z2-7]{55}$/;
