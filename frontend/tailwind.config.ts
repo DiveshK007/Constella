@@ -86,15 +86,11 @@ const config: Config = {
         mono: ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       backgroundImage: {
-        aurora: 'linear-gradient(120deg, hsl(var(--aurora-from)), hsl(var(--aurora-to)))',
-        'aurora-135': 'linear-gradient(135deg, hsl(var(--aurora-from)), hsl(var(--aurora-to)))',
-        'aurora-soft':
-          'linear-gradient(120deg, hsl(var(--aurora-from) / 0.16), hsl(var(--aurora-to) / 0.16))',
+        sheen: 'linear-gradient(120deg, hsl(0 0% 55%), hsl(0 0% 100%) 50%, hsl(0 0% 55%))',
       },
       boxShadow: {
-        glow: '0 0 24px -6px hsl(var(--aurora-from) / 0.55)',
-        'glow-cyan': '0 0 24px -6px hsl(var(--aurora-to) / 0.5)',
-        'glow-sm': '0 0 14px -6px hsl(var(--aurora-from) / 0.5)',
+        glow: '0 0 28px -6px hsl(0 0% 100% / 0.22)',
+        'glow-sm': '0 0 14px -6px hsl(0 0% 100% / 0.2)',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -118,22 +114,12 @@ const config: Config = {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-5px)' },
         },
-        'twinkle': {
-          '0%, 100%': { opacity: '0.35' },
-          '50%': { opacity: '0.7' },
-        },
-        'aurora-pan': {
-          '0%, 100%': { backgroundPosition: '0% 50%' },
-          '50%': { backgroundPosition: '100% 50%' },
-        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         'pulse-soft': 'pulse-soft 3s ease-in-out infinite',
         'float': 'float 3s ease-in-out infinite',
-        'twinkle': 'twinkle 6s ease-in-out infinite',
-        'aurora-pan': 'aurora-pan 8s ease-in-out infinite',
       },
     },
   },

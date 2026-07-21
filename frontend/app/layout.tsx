@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { AnalyticsProvider } from '@/components/analytics-provider';
+import { MotionProvider } from '@/components/motion/motion-provider';
 
 // Display: geometric grotesk for headings + wordmark.
 const display = Space_Grotesk({
@@ -49,12 +50,14 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          {/* Ambient cosmic backdrop — non-interactive, reduced-motion aware. */}
-          <div className="cosmic-stars" aria-hidden="true" />
-          <div className="cosmic-noise" aria-hidden="true" />
-          <ErrorBoundary>{children}</ErrorBoundary>
-          <Toaster />
-          <AnalyticsProvider />
+          <MotionProvider>
+            {/* Ambient monochrome texture — non-interactive, reduced-motion aware. */}
+            <div className="mono-grid" aria-hidden="true" />
+            <div className="mono-grain" aria-hidden="true" />
+            <ErrorBoundary>{children}</ErrorBoundary>
+            <Toaster />
+            <AnalyticsProvider />
+          </MotionProvider>
         </ThemeProvider>
       </body>
     </html>

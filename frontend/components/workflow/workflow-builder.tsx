@@ -19,6 +19,7 @@ import { PropertiesPanel } from "./properties-panel";
 import { CustomNode } from "./nodes/custom-node";
 import { Button } from "@/components/ui/button";
 import { Play, Square, Save, Download, ExternalLink, Loader2, Link2 } from "lucide-react";
+import { ShinyText } from "@/components/motion/shiny-text";
 import "@reactflow/core/dist/style.css";
 
 const nodeTypes = {
@@ -277,7 +278,9 @@ function WorkflowCanvas() {
                             <div className="mx-auto rounded-full bg-primary/15 ring-1 ring-primary/40 shadow-glow-sm w-12 h-12 flex items-center justify-center mb-3">
                                 <Play className="h-5 w-5 text-primary" />
                             </div>
-                            <h3 className="text-lg font-semibold text-foreground mb-1">Get started</h3>
+                            <h3 className="text-lg font-semibold mb-1">
+                                <ShinyText text="Get started" />
+                            </h3>
                             <p className="text-sm text-muted-foreground">
                                 {isMobile
                                     ? "Tap the menu and open Nodes to add workflow steps."

@@ -3,47 +3,43 @@
 @tailwind utilities;
 
 :root {
-  /* ── Cosmic / Stellar palette ──────────────────────────────────────────────
-     Space-separated HSL so Tailwind + raw CSS can apply alpha (hsl(var / a)).
-     Names are kept from the previous theme so existing classes re-theme for free. */
+  /* ── Monochrome scale ──────────────────────────────────────────────────────
+     Neutral (hue 0, sat 0) near-black → off-white. White is the only accent.
+     Token NAMES are unchanged so every component re-themes for free. */
 
-  /* Deep space canvas */
-  --ctp-crust:    246 42% 5%;   /* deepest void */
-  --ctp-base:     243 38% 7%;   /* app background */
-  --ctp-mantle:   244 36% 9%;   /* nebula — panels/cards */
-  --ctp-surface0: 243 22% 14%;
-  --ctp-surface1: 242 18% 19%;
-  --ctp-surface2: 240 16% 26%;
-  --ctp-overlay0: 236 12% 38%;
-  --ctp-overlay1: 236 13% 46%;
-  --ctp-overlay2: 236 14% 56%;
+  /* Near-black canvas + surfaces */
+  --ctp-crust:    0 0% 3%;    /* deepest */
+  --ctp-base:     0 0% 5%;    /* app background */
+  --ctp-mantle:   0 0% 8%;    /* panels / cards */
+  --ctp-surface0: 0 0% 10%;
+  --ctp-surface1: 0 0% 13%;
+  --ctp-surface2: 0 0% 18%;   /* borders */
+  --ctp-overlay0: 0 0% 28%;
+  --ctp-overlay1: 0 0% 40%;
+  --ctp-overlay2: 0 0% 52%;
 
-  /* Starlight text (all AA on the darkest glass/card surfaces) */
-  --ctp-text:     232 40% 92%;  /* star — foreground/headings */
-  --ctp-subtext1: 232 26% 88%;  /* secondary text */
-  --ctp-subtext0: 233 20% 78%;  /* comet — muted (≥9:1 on glass) */
+  /* Off-white text (not pure white — avoids halation) */
+  --ctp-text:     0 0% 96%;   /* foreground / headings */
+  --ctp-subtext1: 0 0% 82%;   /* secondary */
+  --ctp-subtext0: 0 0% 65%;   /* muted */
 
-  /* Aurora accents (violet → cyan) + supporting hues */
-  --ctp-mauve:    258 90% 68%;  /* aurora violet — primary */
-  --ctp-lavender: 252 95% 78%;  /* focus ring */
-  --ctp-sapphire: 187 85% 55%;  /* aurora cyan — accent */
-  --ctp-sky:      192 90% 60%;
-  --ctp-teal:     172 72% 52%;
-  --ctp-blue:     222 90% 66%;
-  --ctp-green:    152 68% 52%;  /* success */
-  --ctp-peach:    32 95% 62%;   /* logic amber */
-  --ctp-yellow:   45 95% 64%;
-  --ctp-red:      352 85% 66%;  /* error / destructive */
-  --ctp-maroon:   350 70% 62%;
-  --ctp-pink:     320 80% 72%;
-  --ctp-flamingo: 340 60% 82%;
-  --ctp-rosewater:320 60% 88%;
+  /* Accent = white; supporting steps are neutral greys (no hue) */
+  --ctp-mauve:    0 0% 98%;   /* primary — white */
+  --ctp-lavender: 0 0% 100%;  /* focus ring — white */
+  --ctp-sapphire: 0 0% 90%;   /* accent */
+  --ctp-sky:      0 0% 84%;
+  --ctp-teal:     0 0% 78%;
+  --ctp-blue:     0 0% 72%;
+  --ctp-green:    0 0% 86%;    /* success (mono; icon/copy carries meaning) */
+  --ctp-peach:    0 0% 60%;
+  --ctp-yellow:   0 0% 70%;
+  --ctp-red:      0 0% 78%;    /* destructive (mono; icon/copy carries meaning) */
+  --ctp-maroon:   0 0% 64%;
+  --ctp-pink:     0 0% 80%;
+  --ctp-flamingo: 0 0% 88%;
+  --ctp-rosewater:0 0% 92%;
 
-  /* Aurora gradient endpoints */
-  --aurora-from: 258 90% 66%;
-  --aurora-to:   187 85% 53%;
-
-  /* ── shadcn/ui token mapping (every component consumes these) ─────────────── */
+  /* ── shadcn/ui token mapping ──────────────────────────────────────────────── */
   --background: var(--ctp-base);
   --foreground: var(--ctp-text);
   --card: var(--ctp-mantle);
@@ -51,7 +47,7 @@
   --popover: var(--ctp-crust);
   --popover-foreground: var(--ctp-text);
   --primary: var(--ctp-mauve);
-  --primary-foreground: var(--ctp-crust);
+  --primary-foreground: var(--ctp-crust);      /* white fill / near-black text */
   --secondary: var(--ctp-surface0);
   --secondary-foreground: var(--ctp-text);
   --muted: var(--ctp-surface1);
@@ -62,12 +58,12 @@
   --destructive-foreground: var(--ctp-crust);
   --border: var(--ctp-surface2);
   --input: var(--ctp-surface1);
-  --ring: var(--ctp-mauve);
-  --chart-1: var(--ctp-mauve);
-  --chart-2: var(--ctp-sapphire);
-  --chart-3: var(--ctp-teal);
-  --chart-4: var(--ctp-blue);
-  --chart-5: var(--ctp-peach);
+  --ring: var(--ctp-lavender);                 /* white focus ring */
+  --chart-1: var(--ctp-text);
+  --chart-2: var(--ctp-subtext0);
+  --chart-3: var(--ctp-overlay1);
+  --chart-4: var(--ctp-overlay0);
+  --chart-5: var(--ctp-surface2);
   --radius: 0.75rem;
 }
 
@@ -82,22 +78,17 @@
 
   body {
     @apply bg-background text-foreground;
-    /* Deep space canvas: layered radial nebula washes over the void. */
-    background-image:
-      radial-gradient(1200px 800px at 15% -10%, hsl(258 90% 20% / 0.30), transparent 60%),
-      radial-gradient(1000px 700px at 100% 0%, hsl(187 85% 22% / 0.20), transparent 55%),
-      radial-gradient(900px 900px at 50% 120%, hsl(246 60% 14% / 0.45), transparent 60%);
+    /* Single, faint monochrome vignette for depth — no colour anywhere. */
+    background-image: radial-gradient(1100px 700px at 50% -20%, hsl(0 0% 100% / 0.035), transparent 60%);
     background-attachment: fixed;
     min-height: 100vh;
   }
 
-  /* Headings wear the geometric display face. */
   h1, h2, h3, .font-display {
     font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
     letter-spacing: -0.02em;
   }
 
-  /* Visible keyboard focus everywhere (WCAG). */
   :focus-visible {
     outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
@@ -105,69 +96,56 @@
   }
 }
 
-/* ── Starfield + noise: fixed, non-interactive, behind all content ──────────── */
-.cosmic-stars,
-.cosmic-noise {
+/* ── Ambient texture: fine mono dot-grid + faint grain, behind all content ──── */
+.mono-grid,
+.mono-grain {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: -1;
 }
 
-.cosmic-stars {
-  background-image:
-    radial-gradient(1.5px 1.5px at 20% 30%, hsl(0 0% 100% / 0.9), transparent),
-    radial-gradient(1.5px 1.5px at 75% 15%, hsl(0 0% 100% / 0.7), transparent),
-    radial-gradient(1px 1px at 40% 70%, hsl(232 60% 90% / 0.8), transparent),
-    radial-gradient(1px 1px at 85% 55%, hsl(0 0% 100% / 0.6), transparent),
-    radial-gradient(1.5px 1.5px at 55% 88%, hsl(187 80% 85% / 0.7), transparent),
-    radial-gradient(1px 1px at 10% 85%, hsl(0 0% 100% / 0.5), transparent),
-    radial-gradient(1px 1px at 65% 40%, hsl(258 80% 88% / 0.6), transparent),
-    radial-gradient(1.5px 1.5px at 92% 82%, hsl(0 0% 100% / 0.7), transparent);
-  background-repeat: repeat;
-  background-size: 420px 420px;
-  opacity: 0.5;
-  animation: star-drift 220s linear infinite;
+.mono-grid {
+  background-image: radial-gradient(hsl(0 0% 100% / 0.05) 1px, transparent 1px);
+  background-size: 22px 22px;
+  /* Fade the grid toward the edges so it reads as texture, not a table. */
+  -webkit-mask-image: radial-gradient(120% 120% at 50% 0%, #000 40%, transparent 90%);
+  mask-image: radial-gradient(120% 120% at 50% 0%, #000 40%, transparent 90%);
+  opacity: 0.6;
 }
 
-.cosmic-noise {
-  /* Subtle film grain to break up flat gradients. */
+.mono-grain {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  opacity: 0.025;
+  opacity: 0.02;
   mix-blend-mode: overlay;
 }
 
-@keyframes star-drift {
-  from { background-position: 0 0; }
-  to   { background-position: 420px 840px; }
-}
-
 @layer components {
-  /* Tasteful glassmorphism for panels/cards. */
+  /* Neutral glassmorphism for panels/cards. */
   .glass {
     background: hsl(var(--ctp-mantle) / 0.62);
-    backdrop-filter: blur(14px) saturate(1.2);
-    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1);
+    -webkit-backdrop-filter: blur(14px) saturate(1);
     border: 1px solid hsl(0 0% 100% / 0.08);
     box-shadow:
-      0 1px 0 0 hsl(0 0% 100% / 0.04) inset,
-      0 16px 40px -20px hsl(246 60% 3% / 0.9);
+      0 1px 0 0 hsl(0 0% 100% / 0.05) inset,
+      0 16px 40px -20px hsl(0 0% 0% / 0.85);
   }
 
   .glass-strong {
     background: hsl(var(--ctp-crust) / 0.72);
-    backdrop-filter: blur(18px) saturate(1.2);
-    -webkit-backdrop-filter: blur(18px) saturate(1.2);
+    backdrop-filter: blur(18px) saturate(1);
+    -webkit-backdrop-filter: blur(18px) saturate(1);
     border: 1px solid hsl(0 0% 100% / 0.09);
   }
+}
 
-  /* Aurora text/fill helpers (used with restraint). */
-  .text-aurora {
-    background: linear-gradient(120deg, hsl(var(--aurora-from)), hsl(var(--aurora-to)));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
+/* Keyframes for adapted reactbits effects (mono). */
+@keyframes shine {
+  to { background-position: -200% 0; }
+}
+@keyframes star-move {
+  to { transform: translateX(-100%); }
 }
 
 /* ── Respect prefers-reduced-motion: kill ambient + transitions ─────────────── */
@@ -180,7 +158,6 @@
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-  .cosmic-stars { animation: none; }
 }
 
 /* ── ReactFlow (canvas gets its full treatment in the workflow commit) ──────── */
@@ -189,45 +166,38 @@
   height: 12px !important;
   border-radius: 50%;
   border: 2px solid hsl(var(--background));
-  background-color: hsl(var(--primary));
+  background-color: hsl(var(--foreground));
   transition: all 0.15s ease-in-out;
 }
 
 .react-flow__handle:hover {
-  background-color: hsl(var(--accent));
+  background-color: hsl(var(--foreground));
   transform: scale(1.2);
 }
 
-.react-flow__handle-connecting {
-  background-color: hsl(var(--accent));
-}
-
+.react-flow__handle-connecting,
 .react-flow__handle-valid {
-  background-color: hsl(var(--ctp-green));
+  background-color: hsl(var(--foreground));
 }
 
 .react-flow__handle-invalid {
-  background-color: hsl(var(--ctp-red));
+  background-color: hsl(var(--ctp-overlay1));
 }
 
 .react-flow__edge-path {
   stroke-width: 2px;
-  stroke: hsl(var(--ctp-mauve));
+  stroke: hsl(0 0% 100% / 0.45);
   transition: stroke 0.15s ease-in-out, stroke-width 0.15s ease-in-out;
 }
 
-.react-flow__edge:hover .react-flow__edge-path {
-  stroke: hsl(var(--ctp-sapphire));
-  stroke-width: 3px;
-}
-
+.react-flow__edge:hover .react-flow__edge-path,
 .react-flow__edge.selected .react-flow__edge-path {
-  stroke: hsl(var(--ctp-sapphire));
+  stroke: hsl(0 0% 100% / 0.9);
   stroke-width: 3px;
 }
 
 .react-flow__connection-path {
-  stroke: hsl(var(--ctp-mauve));
+  stroke: hsl(0 0% 100% / 0.7);
   stroke-width: 2px;
 }
 
@@ -239,7 +209,7 @@
   transform: translateY(-2px);
 }
 
-/* Panels (empty state, hints) inherit the star foreground, never a dim default. */
+/* Panels (empty state, hints) inherit the foreground, never a dim default. */
 .react-flow__panel {
   color: hsl(var(--foreground));
 }
