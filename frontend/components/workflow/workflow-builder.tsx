@@ -274,10 +274,10 @@ function WorkflowCanvas() {
                             position="top-center"
                             className="mt-16 p-6 bg-card rounded-xl border border-border shadow-lg text-center max-w-xs"
                         >
-                            <div className="mx-auto rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-3">
+                            <div className="mx-auto rounded-full bg-primary/15 ring-1 ring-primary/40 shadow-glow-sm w-12 h-12 flex items-center justify-center mb-3">
                                 <Play className="h-5 w-5 text-primary" />
                             </div>
-                            <h3 className="font-semibold text-base mb-1">Get started</h3>
+                            <h3 className="text-lg font-semibold text-foreground mb-1">Get started</h3>
                             <p className="text-sm text-muted-foreground">
                                 {isMobile
                                     ? "Tap the menu and open Nodes to add workflow steps."

@@ -18,10 +18,10 @@
   --ctp-overlay1: 236 13% 46%;
   --ctp-overlay2: 236 14% 56%;
 
-  /* Starlight text */
-  --ctp-text:     232 40% 92%;  /* star */
-  --ctp-subtext1: 233 24% 80%;
-  --ctp-subtext0: 234 16% 70%;  /* comet — muted */
+  /* Starlight text (all AA on the darkest glass/card surfaces) */
+  --ctp-text:     232 40% 92%;  /* star — foreground/headings */
+  --ctp-subtext1: 232 26% 88%;  /* secondary text */
+  --ctp-subtext0: 233 20% 78%;  /* comet — muted (≥9:1 on glass) */
 
   /* Aurora accents (violet → cyan) + supporting hues */
   --ctp-mauve:    258 90% 68%;  /* aurora violet — primary */
@@ -237,6 +237,11 @@
 
 .react-flow__node:hover {
   transform: translateY(-2px);
+}
+
+/* Panels (empty state, hints) inherit the star foreground, never a dim default. */
+.react-flow__panel {
+  color: hsl(var(--foreground));
 }
 
 .react-flow__controls {
