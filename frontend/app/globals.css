@@ -33,7 +33,7 @@
   --ctp-green:    0 0% 86%;    /* success (mono; icon/copy carries meaning) */
   --ctp-peach:    0 0% 60%;
   --ctp-yellow:   0 0% 70%;
-  --ctp-red:      0 0% 78%;    /* destructive (mono; icon/copy carries meaning) */
+  --ctp-red:      0 62% 45%;   /* the one allowed hue — destructive + tx-fail (AA off-white text) */
   --ctp-maroon:   0 0% 64%;
   --ctp-pink:     0 0% 80%;
   --ctp-flamingo: 0 0% 88%;
@@ -55,7 +55,7 @@
   --accent: var(--ctp-sapphire);
   --accent-foreground: var(--ctp-crust);
   --destructive: var(--ctp-red);
-  --destructive-foreground: var(--ctp-crust);
+  --destructive-foreground: var(--ctp-text);
   --border: var(--ctp-surface2);
   --input: var(--ctp-surface1);
   --ring: var(--ctp-lavender);                 /* white focus ring */

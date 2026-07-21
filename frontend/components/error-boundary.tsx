@@ -35,21 +35,23 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       }
 
       return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
-          <div className="rounded-full bg-destructive/10 p-4 mb-4">
-            <AlertTriangle className="h-8 w-8 text-destructive" />
+        <div className="flex min-h-[400px] flex-col items-center justify-center p-8 text-center">
+          <div className="glass max-w-md rounded-2xl p-8">
+            <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full border border-white/10 bg-white/5">
+              <AlertTriangle className="h-7 w-7 text-foreground" />
+            </div>
+            <h2 className="mb-2 text-xl font-semibold text-foreground">Something went wrong</h2>
+            <p className="mb-5 text-sm text-muted-foreground">
+              {this.state.error?.message || "An unexpected error occurred."}
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => this.setState({ hasError: false, error: null })}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Try again
+            </Button>
           </div>
-          <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
-          <p className="text-muted-foreground mb-4 max-w-md">
-            {this.state.error?.message || "An unexpected error occurred."}
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => this.setState({ hasError: false, error: null })}
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Try again
-          </Button>
         </div>
       );
     }
