@@ -248,49 +248,61 @@ function WorkflowCanvas() {
                     multiSelectionKeyCode="Control"
                     selectionKeyCode="Shift"
                     connectionLineType={ConnectionLineType.SmoothStep}
-                    connectionLineStyle={{ stroke: 'hsl(266, 85%, 77%)', strokeWidth: 2 }}
+                    connectionLineStyle={{ stroke: 'hsl(0 0% 100% / 0.6)', strokeWidth: 2 }}
                     defaultEdgeOptions={{
                         type: 'smoothstep',
                         animated: true,
-                        style: { stroke: 'hsl(266, 85%, 77%)', strokeWidth: 2 },
+                        style: { stroke: 'hsl(0 0% 100% / 0.45)', strokeWidth: 2 },
                     }}
                 >
                     <Controls position="bottom-right" className="m-3" />
                     {!isMobile && (
                         <MiniMap
-                            nodeStrokeWidth={3}
+                            nodeStrokeWidth={2}
                             zoomable
                             pannable
-                            className="bg-card border border-border rounded-md"
+                            className="!bg-card/70 !border !border-white/10 rounded-lg backdrop-blur"
+                            maskColor="hsl(0 0% 4% / 0.6)"
+                            nodeColor="hsl(0 0% 100% / 0.25)"
+                            nodeStrokeColor="transparent"
                             nodeBorderRadius={8}
                         />
                     )}
                     <Background
-                        color="hsl(var(--muted-foreground))"
-                        gap={16}
+                        color="hsl(0 0% 100% / 0.07)"
+                        gap={20}
                         size={1}
                     />
 
                     {nodes.length === 0 && (
-                        <Panel position="top-center" className="mt-16">
+                        <Panel position="top-center" className="mt-24 pointer-events-none">
                             <motion.div
-                                initial={{ opacity: 0, y: 14 }}
+                                initial={{ opacity: 0, y: 12 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5, ease: "easeOut" }}
-                                className="glass max-w-sm rounded-2xl p-8 text-center"
+                                className="relative flex flex-col items-center px-12 py-10 text-center"
                             >
+                                {/* Radial clearing — fades the canvas dot-grid to solid near the text */}
+                                <div
+                                    aria-hidden="true"
+                                    className="pointer-events-none absolute inset-0 -z-10"
+                                    style={{
+                                        background:
+                                            "radial-gradient(60% 60% at 50% 42%, hsl(var(--background)) 32%, transparent 78%)",
+                                    }}
+                                />
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.85 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    transition={{ delay: 0.12, duration: 0.4, ease: "easeOut" }}
-                                    className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full border border-white/15 bg-white/10 shadow-glow-sm"
+                                    transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
+                                    className="mb-4 grid h-14 w-14 place-items-center rounded-full border border-white/15 bg-white/5 shadow-glow-sm"
                                 >
                                     <Play className="h-6 w-6 text-foreground" />
                                 </motion.div>
                                 <h3 className="mb-1 text-xl font-semibold">
                                     <ShinyText text="Get started" />
                                 </h3>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="max-w-xs text-sm text-muted-foreground">
                                     {isMobile
                                         ? "Tap the menu and open Nodes to add workflow steps."
                                         : "Drag a trigger from the left, connect an action, then run it."}
@@ -302,7 +314,7 @@ function WorkflowCanvas() {
                     {nodes.length > 0 && (
                         <Panel
                             position="top-center"
-                            className="p-1 px-2 bg-card rounded-md border border-border text-xs md:text-sm shadow-md"
+                            className="rounded-full border border-white/10 bg-card/70 px-3 py-1 text-xs text-muted-foreground shadow-md backdrop-blur md:text-sm"
                         >
                             {isMobile
                                 ? "Tap a node to configure it"

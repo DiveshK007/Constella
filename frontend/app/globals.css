@@ -201,12 +201,11 @@
   stroke-width: 2px;
 }
 
-.react-flow__node {
-  transition: transform 0.15s ease-in-out;
-}
-
-.react-flow__node:hover {
-  transform: translateY(-2px);
+/* Subtle flow on connected edges (frozen under prefers-reduced-motion via the
+   global reduced-motion reset). Node hover-lift is handled by framer-motion. */
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 5 5;
+  animation-duration: 1.2s;
 }
 
 /* Panels (empty state, hints) inherit the foreground, never a dim default. */

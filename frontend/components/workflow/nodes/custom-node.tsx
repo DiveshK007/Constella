@@ -4,83 +4,96 @@ import { Handle, Position, NodeProps } from "@reactflow/core";
 import { motion } from "framer-motion";
 import { NodeData, useWorkflowStore } from "@/lib/stores/workflow-store";
 import { getIconByName } from "@/lib/utils/icons";
-import { Loader2, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Zap,
+  Play,
+  GitBranch,
+  type LucideIcon,
+} from "lucide-react";
+
+type Category = "trigger" | "action" | "logic";
+
+// Categories are distinguished WITHOUT colour — a category icon, a border
+// weight/style, and a text label carry the meaning.
+const CATEGORY: Record<Category, { label: string; icon: LucideIcon; border: string }> = {
+  trigger: { label: "Trigger", icon: Zap, border: "border-2 border-white/25" },
+  action: { label: "Action", icon: Play, border: "border border-white/15" },
+  logic: { label: "Logic", icon: GitBranch, border: "border border-dashed border-white/30" },
+};
+
+function getCategory(type: string): Category {
+  if (type.includes("trigger")) return "trigger";
+  if (type === "delay") return "logic";
+  return "action";
+}
 
 export function CustomNode({ data, id, selected }: NodeProps<NodeData>) {
-    const Icon = getIconByName(data.icon);
-    const { nodeExecutionState, nodeResults, isWorkflowRunning } =
-        useWorkflowStore();
-    const nodeState = nodeExecutionState[id];
-    const nodeResult = nodeResults[id];
+  const Icon = getIconByName(data.icon);
+  const { nodeExecutionState } = useWorkflowStore();
+  const nodeState = nodeExecutionState[id];
 
-    function renderStateIndicator() {
-        switch (nodeState) {
-            case "pending":
-                return (
-                    <Clock className="h-4 w-4 text-muted-foreground animate-pulse" />
-                );
-            case "running":
-                return (
-                    <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
-                );
-            case "success":
-                return <CheckCircle2 className="h-4 w-4 text-green-500" />;
-            case "error":
-                return <AlertCircle className="h-4 w-4 text-red-500" />;
-            default:
-                return null;
-        }
+  const cat = CATEGORY[getCategory(data.type)];
+  const CatIcon = cat.icon;
+
+  function renderStateIndicator() {
+    switch (nodeState) {
+      case "pending":
+        return <Clock className="h-4 w-4 animate-pulse text-muted-foreground" />;
+      case "running":
+        // In-progress is hueless; only tx success/failure use colour.
+        return <Loader2 className="h-4 w-4 animate-spin text-foreground" />;
+      case "success":
+        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      case "error":
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      default:
+        return null;
     }
+  }
 
-    return (
-        <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            whileHover={{ y: -2 }}
-            transition={{ duration: 0.2 }}
-            className={`w-56 rounded-lg border shadow-sm bg-card overflow-hidden ${
-                selected ? "ring-2 ring-primary" : ""
-            }`}
-        >
-            <div
-                className={`p-3 font-medium border-b flex items-center gap-2                 ${
-                    data.type.includes("trigger") ||
-                    data.type === "telegram-trigger"
-                        ? "bg-mauve/20"
-                        : data.type.includes("action") ||
-                          data.type === "stellar-sdk" ||
-                          data.type === "telegram-send" ||
-                          data.type === "wallet-integration"
-                        ? "bg-sapphire/20"
-                        : "bg-peach/20"
-                }`}
-            >
-                <div className="text-primary">{Icon}</div>
-                <div className="truncate flex-1">{data.label}</div>
-                <div>{renderStateIndicator()}</div>
-            </div>
+  return (
+    <motion.div
+      initial={{ scale: 0.92, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      whileHover={{ y: -3 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className={`w-56 overflow-hidden rounded-xl bg-card/80 shadow-sm backdrop-blur-sm transition-shadow duration-200 hover:shadow-glow-sm ${cat.border} ${
+        selected ? "ring-2 ring-white/70 ring-offset-2 ring-offset-background" : ""
+      }`}
+    >
+      {/* Category eyebrow — icon + label (no colour) + execution status */}
+      <div className="flex items-center gap-1.5 px-3 pt-2 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+        <CatIcon className="h-3 w-3" />
+        <span>{cat.label}</span>
+        <span className="ml-auto">{renderStateIndicator()}</span>
+      </div>
 
-            <div className="p-3 text-xs text-muted-foreground">
-                {data.description}
-            </div>
+      {/* Node identity */}
+      <div className="flex items-center gap-2 px-3 pt-1 font-medium text-foreground">
+        <span className="text-foreground/90">{Icon}</span>
+        <span className="truncate">{data.label}</span>
+      </div>
 
-            {/* Input handle on the left */}
-            <Handle 
-                type="target" 
-                position={Position.Left} 
-                id="in"
-                className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!bg-accent !-left-1.5"
-                isConnectable={true}
-            />
+      <div className="px-3 pb-3 pt-1 text-xs text-muted-foreground">{data.description}</div>
 
-            {/* Output handle on the right */}
-            <Handle 
-                type="source" 
-                position={Position.Right} 
-                id="out"
-                className="!w-3 !h-3 !bg-primary !border-2 !border-background hover:!bg-accent !-right-1.5"
-                isConnectable={true}
-            />
-        </motion.div>
-    );
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="in"
+        className="!-left-1.5 !h-3 !w-3 !border-2 !border-background !bg-foreground"
+        isConnectable
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="out"
+        className="!-right-1.5 !h-3 !w-3 !border-2 !border-background !bg-foreground"
+        isConnectable
+      />
+    </motion.div>
+  );
 }
