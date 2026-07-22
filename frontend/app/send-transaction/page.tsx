@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Send, CheckCircle2, AlertCircle, Loader2, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import { getStoredAddress, isWalletConnected, signWithKit } from "@/lib/wallet-kit";
 
 const STELLAR_BOT_URL = process.env.NEXT_PUBLIC_STELLAR_BOT_URL || "http://localhost:3003";
@@ -133,130 +134,137 @@ export default function SendTransactionPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <Send className="w-8 h-8 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">Send XLM</CardTitle>
-          <CardDescription>
-            Sign and send a transaction with your connected wallet
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {walletConnected === null ? (
-            <div className="flex flex-col items-center justify-center py-8 gap-2">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              <p className="text-sm text-muted-foreground">Checking wallet...</p>
+    <main className="flex min-h-screen items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="w-full max-w-md"
+      >
+        <Card className="rounded-2xl border-white/10 bg-card/70 shadow-2xl backdrop-blur-xl">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border border-white/10 bg-white/5">
+              <Send className="h-8 w-8 text-foreground" />
             </div>
-          ) : walletConnected === false ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 p-4 rounded-lg bg-yellow-500/10 text-yellow-500">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <p className="text-sm">No wallet connected yet</p>
+            <CardTitle className="font-display text-2xl">Send XLM</CardTitle>
+            <CardDescription>Sign and send a transaction with your connected wallet</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {walletConnected === null ? (
+              <div className="flex flex-col items-center justify-center gap-2 py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-foreground" />
+                <p className="text-sm text-muted-foreground">Checking wallet...</p>
               </div>
-              <Button onClick={() => (window.location.href = "/connect-wallet")} className="w-full">
-                Connect a Wallet
-              </Button>
-            </div>
-          ) : status === "success" ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 p-4 rounded-lg bg-green-500/10 text-green-500">
-                <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium">Transaction Successful!</p>
-                  <p className="text-xs opacity-80 font-mono">
-                    {txHash?.slice(0, 16)}...
+            ) : walletConnected === false ? (
+              <div className="space-y-4">
+                {/* Prompt — hueless (not an error) */}
+                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-4 text-muted-foreground">
+                  <AlertCircle className="h-5 w-5 shrink-0" />
+                  <p className="text-sm">No wallet connected yet</p>
+                </div>
+                <Button onClick={() => (window.location.href = "/connect-wallet")} className="w-full">
+                  Connect a Wallet
+                </Button>
+              </div>
+            ) : status === "success" ? (
+              <div className="space-y-4">
+                {/* Transaction success — green (tx-status), with icon + text */}
+                <div className="flex items-center gap-3 rounded-xl border border-green-500/25 bg-green-500/10 p-4 text-green-300">
+                  <CheckCircle2 className="h-5 w-5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium">Transaction Successful!</p>
+                    <p className="font-mono text-xs opacity-90">{txHash?.slice(0, 16)}…</p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => window.open(`https://stellar.expert/explorer/${network}/tx/${txHash}`, "_blank")}
+                  variant="outline"
+                  className="w-full"
+                >
+                  View on Explorer
+                </Button>
+                {chatId && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    ✅ Telegram notified! You can close this page.
                   </p>
-                </div>
-              </div>
-              <Button
-                onClick={() => window.open(`https://stellar.expert/explorer/${network}/tx/${txHash}`, "_blank")}
-                variant="outline"
-                className="w-full"
-              >
-                View on Explorer
-              </Button>
-              {chatId && (
-                <p className="text-sm text-center text-muted-foreground">
-                  ✅ Telegram notified! You can close this page.
-                </p>
-              )}
-            </div>
-          ) : status === "error" ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 p-4 rounded-lg bg-red-500/10 text-red-500">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <p className="text-sm">{error}</p>
-              </div>
-              <Button onClick={() => setStatus("idle")} className="w-full">
-                Try Again
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {publicKey && (
-                <div className="p-3 rounded-lg bg-muted">
-                  <p className="text-xs text-muted-foreground">From</p>
-                  <p className="text-sm font-mono truncate">{publicKey}</p>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="destination">Destination Address</Label>
-                <Input
-                  id="destination"
-                  placeholder="GABC...XYZ"
-                  value={destination}
-                  onChange={(e) => setDestination(e.target.value)}
-                  disabled={status !== "idle"}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount (XLM)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="10"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  disabled={status !== "idle"}
-                />
-              </div>
-
-              <Button
-                onClick={sendTransaction}
-                className="w-full"
-                disabled={status !== "idle" || !publicKey}
-              >
-                {status === "loading" ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Building Transaction...
-                  </>
-                ) : status === "signing" ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Sign in your wallet...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Send XLM
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
                 )}
-              </Button>
+              </div>
+            ) : status === "error" ? (
+              <div className="space-y-4">
+                {/* Transaction failure / error — red, with icon + text */}
+                <div className="flex items-center gap-3 rounded-xl border border-red-500/25 bg-red-500/10 p-4 text-red-300">
+                  <AlertCircle className="h-5 w-5 shrink-0" />
+                  <p className="text-sm">{error}</p>
+                </div>
+                <Button onClick={() => setStatus("idle")} className="w-full">
+                  Try Again
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {publicKey && (
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <p className="text-xs text-muted-foreground">From</p>
+                    <p className="truncate font-mono text-sm">{publicKey}</p>
+                  </div>
+                )}
 
-              <p className="text-xs text-center text-muted-foreground">
-                Network: {network} • You'll be prompted to sign in your wallet
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="destination">Destination Address</Label>
+                  <Input
+                    id="destination"
+                    placeholder="GABC...XYZ"
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
+                    disabled={status !== "idle"}
+                    className="font-mono"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="amount">Amount (XLM)</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    placeholder="10"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    disabled={status !== "idle"}
+                  />
+                </div>
+
+                <Button
+                  onClick={sendTransaction}
+                  className="w-full"
+                  disabled={status !== "idle" || !publicKey}
+                >
+                  {status === "loading" ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Building Transaction...
+                    </>
+                  ) : status === "signing" ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sign in your wallet...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="mr-2 h-4 w-4" />
+                      Send XLM
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+
+                <p className="text-center text-xs text-muted-foreground">
+                  Network: {network} • You'll be prompted to sign in your wallet
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
     </main>
   );
 }

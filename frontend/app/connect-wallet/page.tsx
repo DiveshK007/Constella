@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wallet, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 import {
   connectWallet,
   getKitNetwork,
@@ -104,85 +105,94 @@ export default function ConnectWalletPage() {
   };
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <Wallet className="w-8 h-8 text-primary" />
-          </div>
-          <CardTitle className="text-2xl">Connect Wallet</CardTitle>
-          <CardDescription>
-            Connect Freighter, Albedo, or xBull to interact with Stellar
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {status === "connected" ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 p-4 rounded-lg bg-green-500/10 text-green-500">
-                <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium">Wallet Connected!</p>
-                  <p className="text-xs opacity-80 font-mono">
-                    {publicKey?.slice(0, 12)}...{publicKey?.slice(-12)}
-                  </p>
+    <main className="flex min-h-screen items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="w-full max-w-md"
+      >
+        <Card className="rounded-2xl border-white/10 bg-card/70 shadow-2xl backdrop-blur-xl">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full border border-white/10 bg-white/5">
+              <Wallet className="h-8 w-8 text-foreground" />
+            </div>
+            <CardTitle className="font-display text-2xl">Connect Wallet</CardTitle>
+            <CardDescription>
+              Connect Freighter, Albedo, or xBull to interact with Stellar
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {status === "connected" ? (
+              <div className="space-y-4">
+                {/* Connection confirmation — hueless (not a transaction) */}
+                <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Wallet Connected!</p>
+                    <p className="font-mono text-xs text-muted-foreground">
+                      {publicKey?.slice(0, 12)}…{publicKey?.slice(-12)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <p className="text-sm text-center text-muted-foreground">
-                Redirecting to dashboard in 3 seconds...
-              </p>
-              <Button onClick={() => (window.location.href = "/")} className="w-full">
-                Go to Dashboard →
-              </Button>
-              {chatId && (
-                <p className="text-sm text-center text-muted-foreground">
-                  ✅ Telegram notified! You can also return to Telegram.
+                <p className="text-center text-sm text-muted-foreground">
+                  Redirecting to dashboard in 3 seconds...
                 </p>
-              )}
-            </div>
-          ) : status === "error" ? (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 p-4 rounded-lg bg-red-500/10 text-red-500">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                <p className="text-sm">{error}</p>
-              </div>
-              <Button onClick={handleConnect} className="w-full">
-                Try Again
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {chatId && (
-                <p className="text-sm text-center text-muted-foreground">
-                  Connecting wallet for Telegram chat
-                </p>
-              )}
-              <Button onClick={handleConnect} className="w-full" disabled={status === "connecting"}>
-                {status === "connecting" ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Choose a wallet...
-                  </>
-                ) : (
-                  <>
-                    <Wallet className="w-4 h-4 mr-2" />
-                    Connect Wallet
-                  </>
+                <Button onClick={() => (window.location.href = "/")} className="w-full">
+                  Go to Dashboard →
+                </Button>
+                {chatId && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    ✅ Telegram notified! You can also return to Telegram.
+                  </p>
                 )}
-              </Button>
-              <p className="text-xs text-center text-muted-foreground">
-                Supports Freighter, Albedo and xBull.
+              </div>
+            ) : status === "error" ? (
+              <div className="space-y-4">
+                {/* Error — red, with icon + text */}
+                <div className="flex items-center gap-3 rounded-xl border border-red-500/25 bg-red-500/10 p-4 text-red-300">
+                  <AlertCircle className="h-5 w-5 shrink-0" />
+                  <p className="text-sm">{error}</p>
+                </div>
+                <Button onClick={handleConnect} className="w-full">
+                  Try Again
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {chatId && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    Connecting wallet for Telegram chat
+                  </p>
+                )}
+                <Button onClick={handleConnect} className="w-full" disabled={status === "connecting"}>
+                  {status === "connecting" ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Choose a wallet...
+                    </>
+                  ) : (
+                    <>
+                      <Wallet className="mr-2 h-4 w-4" />
+                      Connect Wallet
+                    </>
+                  )}
+                </Button>
+                <p className="text-center text-xs text-muted-foreground">
+                  Supports Freighter, Albedo and xBull.
+                </p>
+              </div>
+            )}
+
+            <div className="border-t border-white/10 pt-4">
+              <p className="text-center text-xs text-muted-foreground">
+                By connecting, you allow StellrFlow to request transaction signatures.
+                Your private keys never leave your wallet.
               </p>
             </div>
-          )}
-
-          <div className="pt-4 border-t">
-            <p className="text-xs text-center text-muted-foreground">
-              By connecting, you allow StellrFlow to request transaction signatures.
-              Your private keys never leave your wallet.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
     </main>
   );
 }
