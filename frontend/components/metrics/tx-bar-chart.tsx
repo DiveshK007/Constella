@@ -9,10 +9,14 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  LabelList,
   ResponsiveContainer,
 } from "recharts";
+import { useReducedMotion } from "framer-motion";
 
-const MAUVE = "#cba6f7";
+// Single series → white (the primary). If more series are ever added, they must
+// be distinguished by line/dash style + direct labels, never by shades of grey.
+const BAR = "hsl(0 0% 90%)";
 
 interface DayBucket {
   day: string;
@@ -22,20 +26,20 @@ interface DayBucket {
 function TxTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-card border border-border rounded-lg px-3 py-2 text-xs shadow-lg">
-      <p className="text-muted-foreground mb-1">{label}</p>
-      <p className="font-semibold" style={{ color: MAUVE }}>
-        {payload[0].value} tx
-      </p>
+    <div className="rounded-lg border border-white/10 bg-card/90 px-3 py-2 text-xs shadow-lg backdrop-blur">
+      <p className="mb-1 text-muted-foreground">{label}</p>
+      <p className="font-semibold text-foreground">{payload[0].value} tx</p>
     </div>
   );
 }
 
 export default function TxBarChart({ data }: { data: DayBucket[] }) {
+  const reduce = useReducedMotion();
+
   return (
     <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+      <BarChart data={data} margin={{ top: 14, right: 4, left: -20, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 100% / 0.06)" vertical={false} />
         <XAxis
           dataKey="day"
           tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
@@ -47,9 +51,25 @@ export default function TxBarChart({ data }: { data: DayBucket[] }) {
           axisLine={false}
           tickLine={false}
           allowDecimals={false}
+          width={28}
         />
-        <Tooltip content={<TxTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
-        <Bar dataKey="count" fill={MAUVE} radius={[4, 4, 0, 0]} maxBarSize={40} />
+        <Tooltip content={<TxTooltip />} cursor={{ fill: "hsl(0 0% 100% / 0.05)" }} />
+        <Bar
+          dataKey="count"
+          fill={BAR}
+          radius={[4, 4, 0, 0]}
+          maxBarSize={40}
+          isAnimationActive={!reduce}
+        >
+          {/* Direct value labels — readability without relying on colour. */}
+          <LabelList
+            dataKey="count"
+            position="top"
+            fill="hsl(var(--muted-foreground))"
+            fontSize={10}
+            formatter={(v: number) => (v > 0 ? v : "")}
+          />
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );

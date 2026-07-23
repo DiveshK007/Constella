@@ -213,7 +213,6 @@ export default function MetricsPage() {
       value: txCount.toLocaleString(),
       sub: `for the app account · Horizon ${NETWORK_LABEL}`,
       icon: <Wallet className="h-4 w-4" />,
-      color: "text-blue-400",
       loading: txLoading,
     },
     {
@@ -224,7 +223,6 @@ export default function MetricsPage() {
           ? "no data yet — WorkflowRegistry get_count"
           : "WorkflowRegistry get_count (on-chain)",
       icon: <Code2 className="h-4 w-4" />,
-      color: "text-yellow-400",
       loading: contractLoading,
     },
     {
@@ -232,7 +230,6 @@ export default function MetricsPage() {
       value: workflowCount.toLocaleString(),
       sub: "tracked locally in this browser",
       icon: <GitBranch className="h-4 w-4" />,
-      color: "text-primary",
       loading: false,
     },
   ];
@@ -254,7 +251,7 @@ export default function MetricsPage() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-primary flex items-center gap-2">
+              <h1 className="flex items-center gap-2 font-display text-2xl font-bold text-foreground sm:text-3xl">
                 <BarChart3 className="h-7 w-7" />
                 Metrics Dashboard
               </h1>
@@ -293,7 +290,7 @@ export default function MetricsPage() {
         </div>
 
         {/* Data sources note */}
-        <div className="bg-muted p-4 rounded-lg flex flex-col md:flex-row items-center justify-between text-sm text-muted-foreground border">
+        <div className="flex flex-col items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-muted-foreground md:flex-row">
           <div>
             <span className="font-semibold text-foreground mr-1">Data Sources:</span>
             <span>
@@ -307,12 +304,12 @@ export default function MetricsPage() {
         {/* Stat grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {statCards.map((stat, i) => (
-            <Card key={i} className="bg-card">
+            <Card key={i} className="rounded-2xl border-white/10 bg-card/70 shadow-xl backdrop-blur-xl">
               <CardHeader className="pb-2 pt-4 px-4 flex flex-row items-center justify-between space-y-0">
                 <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                   {stat.title}
                 </CardTitle>
-                <div className={`${stat.color} bg-background p-2 rounded-full shadow-sm`}>
+                <div className="grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-white/5 text-foreground">
                   {stat.icon}
                 </div>
               </CardHeader>
@@ -327,7 +324,7 @@ export default function MetricsPage() {
         </div>
 
         {/* Live Transaction Feed */}
-        <Card className="bg-card border-border">
+        <Card className="rounded-2xl border-white/10 bg-card/70 shadow-xl backdrop-blur-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center justify-between gap-2">
               <span className="flex items-center gap-2 text-muted-foreground">
@@ -422,7 +419,7 @@ export default function MetricsPage() {
         </Card>
 
         {/* On-chain transactions — last 7 days (derived from real tx timestamps) */}
-        <Card className="bg-card border-border">
+        <Card className="rounded-2xl border-white/10 bg-card/70 shadow-xl backdrop-blur-xl">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
               <Activity className="h-4 w-4" />
@@ -446,7 +443,7 @@ export default function MetricsPage() {
         </Card>
 
         {/* Contract Activity */}
-        <Card className="bg-card border-border">
+        <Card className="rounded-2xl border-white/10 bg-card/70 shadow-xl backdrop-blur-xl">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
               <Code2 className="h-4 w-4" />
@@ -470,7 +467,7 @@ export default function MetricsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Network</p>
-                  <span className="text-xs font-mono text-green-400 bg-green-500/10 px-2 py-0.5 rounded">
+                  <span className="rounded border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-xs text-muted-foreground">
                     Stellar {NETWORK_LABEL}
                   </span>
                 </div>
@@ -478,7 +475,7 @@ export default function MetricsPage() {
 
               <div className="flex gap-4 sm:gap-10 shrink-0">
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-yellow-400">
+                  <p className="text-3xl font-bold text-foreground">
                     {contractLoading ? "…" : executionDisplay}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">Executions</p>
