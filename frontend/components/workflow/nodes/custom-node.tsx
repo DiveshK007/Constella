@@ -61,10 +61,18 @@ export function CustomNode({ data, id, selected }: NodeProps<NodeData>) {
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className={`w-56 overflow-hidden rounded-xl bg-card/80 shadow-sm backdrop-blur-sm transition-shadow duration-200 hover:shadow-glow-sm ${cat.border} ${
+      className={`relative w-56 rounded-xl shadow-sm transition-shadow duration-200 hover:shadow-glow-sm ${cat.border} ${
         selected ? "ring-2 ring-white/70 ring-offset-2 ring-offset-background" : ""
       }`}
     >
+      {/* Decorative glass fill on a non-interactive layer BEHIND the content.
+          The blur/overflow must never live on the element that hosts the
+          <Handle>s, or backdrop-filter clipping eats the connection hit-tests. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 rounded-xl bg-card/80 backdrop-blur-sm"
+      />
+
       {/* Category eyebrow — icon + label (no colour) + execution status */}
       <div className="flex items-center gap-1.5 px-3 pt-2 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
         <CatIcon className="h-3 w-3" />
@@ -80,6 +88,7 @@ export function CustomNode({ data, id, selected }: NodeProps<NodeData>) {
 
       <div className="px-3 pb-3 pt-1 text-xs text-muted-foreground">{data.description}</div>
 
+      {/* Handles: direct, unclipped children so ReactFlow can hit-test them. */}
       <Handle
         type="target"
         position={Position.Left}

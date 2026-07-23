@@ -318,7 +318,7 @@ function WorkflowCanvas() {
                         >
                             {isMobile
                                 ? "Tap a node to configure it"
-                                : "Click nodes to connect them. Drag from sidebar to add new nodes."}
+                                : "Drag from a node's handle to another to connect. Drag from the sidebar to add nodes."}
                         </Panel>
                     )}
 
