@@ -50,7 +50,7 @@ router.get("/:chatId/balance", async (req, res) => {
   try {
     const wallet = freighterWallets.get(req.params.chatId);
     if (!wallet) {
-      return res.status(404).json({ success: false, error: "No Freighter wallet connected. Connect via StellrFlow workflow." });
+      return res.status(404).json({ success: false, error: "No Freighter wallet connected. Connect via Constella workflow." });
     }
 
     try {

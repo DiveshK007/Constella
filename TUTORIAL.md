@@ -16,7 +16,7 @@ Stellar solves this elegantly with **Fee Bump Transactions**. A fee bump transac
 
 ## 3. Implementation Guide
 
-Here is the exact implementation used in **StellrFlow** to allow users to execute on-chain workflow steps without holding XLM.
+Here is the exact implementation used in **Constella** to allow users to execute on-chain workflow steps without holding XLM.
 
 ### Step 1: Initialize the Transaction
 
@@ -75,6 +75,6 @@ try {
 
 ## 4. Conclusion
 
-By implementing Fee Sponsorship, **StellrFlow** allows users to trigger complex automated workflows entirely gas-free, drastically lowering the barrier to entry for Web3.
+By implementing Fee Sponsorship, **Constella** allows users to trigger complex automated workflows entirely gas-free, drastically lowering the barrier to entry for Web3.
 
 For the full implementation, check out our `bots/telegram-stellar/src/routes/transaction.ts` file in the repository!

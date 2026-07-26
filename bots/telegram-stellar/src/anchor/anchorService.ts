@@ -1,5 +1,5 @@
 /**
- * StellrFlow - Anchor Service (Orchestration + Re-exports)
+ * Constella - Anchor Service (Orchestration + Re-exports)
  *
  * Single import point for telegram-bot.ts.
  * Re-exports from onramp, offramp, stellarService, mockAnchor.

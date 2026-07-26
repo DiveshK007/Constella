@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Docs — Getting Started · StellrFlow",
+  title: "Docs — Getting Started · Constella",
   description: "A short getting-started guide for building your first Stellar workflow.",
 };
 
@@ -21,7 +21,7 @@ const STEPS = [
   {
     icon: Wallet,
     title: "1. Connect your wallet",
-    body: "Open Connect Wallet and choose Freighter, Albedo, or xBull. Your keys stay in your wallet — StellrFlow only ever requests signatures. On testnet you can fund a wallet from Friendbot.",
+    body: "Open Connect Wallet and choose Freighter, Albedo, or xBull. Your keys stay in your wallet — Constella only ever requests signatures. On testnet you can fund a wallet from Friendbot.",
     href: "/connect-wallet",
     hrefLabel: "Connect a wallet →",
   },
@@ -74,7 +74,7 @@ export default function DocsPage() {
 
         <Card className="bg-card">
           <CardContent className="pt-6 text-sm text-muted-foreground">
-            StellrFlow is a visual, drag-and-drop builder for automating Stellar
+            Constella is a visual, drag-and-drop builder for automating Stellar
             transactions. You connect triggers, actions, and conditions on a canvas,
             then run them — with every workflow run logged on-chain. The steps below
             walk you through your first workflow.

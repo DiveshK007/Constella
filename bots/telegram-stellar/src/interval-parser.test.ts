@@ -1,5 +1,5 @@
 /**
- * StellrFlow — interval-parser.ts Unit Tests
+ * Constella — interval-parser.ts Unit Tests
  * ===========================================
  * Full coverage of parseIntervalFormat, formatIntervalForDisplay,
  * and isValidIntervalFormat.

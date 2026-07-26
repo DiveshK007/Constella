@@ -1,6 +1,6 @@
-# StellrFlow Telegram Bot — Stellar Integration
+# Constella Telegram Bot — Stellar Integration
 
-Telegram bot + REST API backend for the StellrFlow hackathon project. Handles wallet management, XLM payments, fiat on/off ramp (anchor), recurring payments (AutoPay), and multi-signature transactions — all on Stellar testnet.
+Telegram bot + REST API backend for the Constella hackathon project. Handles wallet management, XLM payments, fiat on/off ramp (anchor), recurring payments (AutoPay), and multi-signature transactions — all on Stellar testnet.
 
 ## Screenshots
 
@@ -196,7 +196,7 @@ The anchor system simulates [SEP-24](https://stellar.org/protocol/sep-24) intera
 
 ## Integration with Frontend
 
-Set the API base URL in the StellrFlow frontend to `http://localhost:3003` when using Stellar workflow nodes.
+Set the API base URL in the Constella frontend to `http://localhost:3003` when using Stellar workflow nodes.
 
 ## References
 

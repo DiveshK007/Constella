@@ -1,5 +1,5 @@
 /**
- * StellrFlow Telegram Bot - Stellar Integration
+ * Constella Telegram Bot - Stellar Integration
  *
  * Adapted from fluid-labs/core/bots/telegram (AO) for Stellar.
  * Uses @stellar/stellar-sdk for balance checks and payments.
@@ -157,7 +157,7 @@ const getContacts = (chatId: string) => {
 };
 
 function initBot() {
-  console.log("Initializing StellrFlow Telegram Bot (Stellar)...");
+  console.log("Initializing Constella Telegram Bot (Stellar)...");
 
   bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id.toString();
@@ -192,7 +192,7 @@ function initBot() {
       // New user — guided onboarding
       bot.sendMessage(
         chatId,
-        `👋 Hello, <b>${esc(username)}</b>! Welcome to <b>StellrFlow Bot</b>.\n\n` +
+        `👋 Hello, <b>${esc(username)}</b>! Welcome to <b>Constella Bot</b>.\n\n` +
         `I can help you send XLM, check balances, and automate Stellar payments.\n\n` +
         `<b>Step 1 — Connect a wallet to get started:</b>`,
         {
@@ -255,7 +255,7 @@ function initBot() {
     const hasFreighterWallet = freighterWallets.has(chatId);
     const hasAnyWallet = hasTelegramWallet || hasFreighterWallet;
 
-    let helpText = "<b>StellrFlow Bot Commands</b>\n\n" +
+    let helpText = "<b>Constella Bot Commands</b>\n\n" +
       "<b>General:</b>\n" +
       "/start - Start the bot\n" +
       "/register - Get your chat ID\n" +
@@ -290,7 +290,7 @@ function initBot() {
       helpText += `\n_Connected: ${wallet.publicKey.slice(0, 8)}...${wallet.publicKey.slice(-8)}_\n`;
     } else {
       helpText += "\n<b>Wallet Options:</b>\n" +
-        "• Connect Freighter via StellrFlow workflow\n" +
+        "• Connect Freighter via Constella workflow\n" +
         "• Or connect Telegram wallet via workflow\n";
     }
 
@@ -304,7 +304,7 @@ function initBot() {
     const freighterWallet = freighterWallets.get(chatId);
     const session = activeSessions.get(chatId);
 
-    let statusText = "<b>📊 Your StellrFlow Status</b>\n\n";
+    let statusText = "<b>📊 Your Constella Status</b>\n\n";
 
     if (freighterWallet) {
       statusText += "<b>🦊 Wallet Type:</b> Freighter (Browser)\n" +
@@ -317,7 +317,7 @@ function initBot() {
         "<i>Use /send to send XLM directly</i>\n";
     } else {
       statusText += "<b>Wallet:</b> Not connected\n\n" +
-        "Connect a wallet via StellrFlow workflow:\n" +
+        "Connect a wallet via Constella workflow:\n" +
         "• Freighter - Use your browser wallet\n" +
         "• Telegram - Create an in-bot wallet\n";
     }
@@ -347,7 +347,7 @@ function initBot() {
       bot.sendMessage(
         chatId,
         "❌ No wallet connected.\n\n" +
-        "Connect a wallet via StellrFlow workflow to use this command.",
+        "Connect a wallet via Constella workflow to use this command.",
         { parse_mode: "HTML" }
       );
       return;
@@ -412,7 +412,7 @@ function initBot() {
       bot.sendMessage(
         chatId,
         "❌ No wallet connected.\n\n" +
-        "Connect a wallet via StellrFlow workflow.",
+        "Connect a wallet via Constella workflow.",
         { parse_mode: "HTML" }
       );
       return;
@@ -481,7 +481,7 @@ function initBot() {
     bot.sendMessage(
       chatId,
       `✅ ${walletType} wallet disconnected.\n\n` +
-      "You can connect a new wallet via StellrFlow workflow.",
+      "You can connect a new wallet via Constella workflow.",
       { parse_mode: "HTML" }
     );
   });
@@ -562,7 +562,7 @@ function initBot() {
     if (!wallet) {
       bot.sendMessage(
         chatId,
-        "❌ No wallet connected. Connect one via StellrFlow workflow.",
+        "❌ No wallet connected. Connect one via Constella workflow.",
         { parse_mode: "HTML" }
       );
       return;
@@ -631,7 +631,7 @@ function initBot() {
       bot.sendMessage(
         chatId,
         "❌ No wallet connected.\n\n" +
-        "Connect a wallet first via StellrFlow workflow, then use /addfunds.",
+        "Connect a wallet first via Constella workflow, then use /addfunds.",
         { parse_mode: "HTML" }
       );
       return;
@@ -727,7 +727,7 @@ function initBot() {
       bot.sendMessage(
         chatId,
         "❌ No wallet connected.\n\n" +
-        "Connect a wallet first via StellrFlow workflow, then use /withdraw.",
+        "Connect a wallet first via Constella workflow, then use /withdraw.",
         { parse_mode: "HTML" }
       );
       return;
@@ -1193,7 +1193,7 @@ function initBot() {
     if (!wallet) {
       bot.sendMessage(
         chatId,
-        "❌ No wallet connected. Connect one via StellrFlow workflow.",
+        "❌ No wallet connected. Connect one via Constella workflow.",
         { parse_mode: "HTML" }
       );
       return;
@@ -1386,7 +1386,7 @@ function initBot() {
     } else if (query.data === "onboard_freighter") {
       bot.sendMessage(
         chatId,
-        "🦊 <b>Connect Freighter</b>\n\nFreighter is a browser extension wallet. To connect it to this bot:\n\n1. Open StellrFlow at your frontend URL\n2. Click <b>Connect Wallet</b> → Freighter\n3. Run a workflow with the Telegram trigger\n\nYour Freighter wallet will then be linked to this chat.",
+        "🦊 <b>Connect Freighter</b>\n\nFreighter is a browser extension wallet. To connect it to this bot:\n\n1. Open Constella at your frontend URL\n2. Click <b>Connect Wallet</b> → Freighter\n3. Run a workflow with the Telegram trigger\n\nYour Freighter wallet will then be linked to this chat.",
         { parse_mode: "HTML" }
       );
     } else if (query.data === "onboard_explain") {
@@ -1411,7 +1411,7 @@ function initBot() {
     } else if (query.data === "show_help") {
       bot.sendMessage(
         chatId,
-        "<b>StellrFlow Bot Commands</b>\n\n" +
+        "<b>Constella Bot Commands</b>\n\n" +
         "/mybalance — Your wallet balance\n" +
         "/send ADDR AMOUNT — Send XLM\n" +
         "/txhistory — On-chain transactions\n" +
@@ -1488,14 +1488,14 @@ function initBot() {
 
     // If no session or chatbot not enabled, send a helpful message
     if (!session) {
-      // No active session - user hasn't connected via StellrFlow
+      // No active session - user hasn't connected via Constella
       return; // Silent - don't respond to random messages
     }
 
     if (!hasChatbot) {
       await bot.sendMessage(
         chatId,
-        "💡 To enable the AI chatbot, connect the <b>Stellar SDK (Chatbot)</b> block to your Telegram trigger in StellrFlow and run the workflow again.",
+        "💡 To enable the AI chatbot, connect the <b>Stellar SDK (Chatbot)</b> block to your Telegram trigger in Constella and run the workflow again.",
         { parse_mode: "HTML" }
       );
       return;
@@ -2121,7 +2121,7 @@ app.get("/api/freighter/:chatId/balance", async (req, res) => {
     if (!wallet) {
       return res.status(404).json({
         success: false,
-        error: "No Freighter wallet connected. Connect via StellrFlow workflow.",
+        error: "No Freighter wallet connected. Connect via Constella workflow.",
       });
     }
 
@@ -2499,7 +2499,7 @@ app.post("/api/transaction/fee-bump", walletLimiter, validate(schemas.feeBump), 
       success: true,
       hash: (result as any).hash,
       feeSponsor: sponsorKeypair.publicKey(),
-      message: "Transaction fee sponsored by StellrFlow",
+      message: "Transaction fee sponsored by Constella",
     });
   } catch (err: any) {
     console.error("Fee bump error:", err);
@@ -2750,7 +2750,7 @@ async function startup() {
   await checkHorizonConnectivity();
 
   app.listen(PORT, () => {
-    console.log(`StellrFlow Telegram Bot API running on port ${PORT}`);
+    console.log(`Constella Telegram Bot API running on port ${PORT}`);
     console.log(`Stellar network: ${STELLAR_NETWORK}`);
     console.log(`Routes: modular (./routes)`);
   });

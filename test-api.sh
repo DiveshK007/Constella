@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "============================================"
-echo "  StellrFlow Full API Test Suite"
+echo "  Constella Full API Test Suite"
 echo "============================================"
 echo ""
 

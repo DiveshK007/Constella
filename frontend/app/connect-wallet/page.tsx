@@ -186,7 +186,7 @@ export default function ConnectWalletPage() {
 
             <div className="border-t border-white/10 pt-4">
               <p className="text-center text-xs text-muted-foreground">
-                By connecting, you allow StellrFlow to request transaction signatures.
+                By connecting, you allow Constella to request transaction signatures.
                 Your private keys never leave your wallet.
               </p>
             </div>

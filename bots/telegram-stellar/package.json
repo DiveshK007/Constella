@@ -1,7 +1,7 @@
 {
-  "name": "stellrflow-telegram-stellar-bot",
+  "name": "constella-telegram-stellar-bot",
   "version": "1.0.0",
-  "description": "Telegram bot with Stellar integration for StellrFlow",
+  "description": "Telegram bot with Stellar integration for Constella",
   "type": "module",
   "main": "dist/telegram-bot.js",
   "scripts": {

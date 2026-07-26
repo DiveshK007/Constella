@@ -1,6 +1,6 @@
-# Security Checklist — StellrFlow
+# Security Checklist — Constella
 
-> **Scope:** This document covers the security posture of StellrFlow as a Stellar hackathon
+> **Scope:** This document covers the security posture of Constella as a Stellar hackathon
 > project running exclusively on **testnet**. All items are assessed against the current
 > codebase. Items marked ⚠️ are acknowledged limitations with a stated production migration
 > path.

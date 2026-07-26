@@ -1,9 +1,9 @@
-# StellrFlow
+# Constella
 
 <div align="center">
-  <img src="./frontend/public/logo.png" alt="StellrFlow Logo" width="200"/>
+  <img src="./frontend/public/logo.png" alt="Constella Logo" width="200"/>
   
-  **Visual Workflow Automation for the Stellar Blockchain**
+  **Visual workflow automation on Stellar**
   
   [![Stellar](https://img.shields.io/badge/Stellar-Testnet-brightgreen)](https://stellar.org/)
   [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
@@ -68,7 +68,7 @@ Live transaction feed pulled from the Stellar Horizon testnet API, charts for da
 
 ## 🌟 About
 
-**StellrFlow** is a visual workflow automation platform built on the Stellar blockchain that empowers users to create sophisticated blockchain interactions without writing a single line of code. Through an intuitive drag-and-drop interface, users can connect triggers, actions, and conditions to automate Stellar transactions, monitor balances, send notifications, and integrate with Telegram — all powered by Soroban smart contracts on the backend.
+**Constella** is a visual workflow automation platform built on the Stellar blockchain that empowers users to create sophisticated blockchain interactions without writing a single line of code. Through an intuitive drag-and-drop interface, users can connect triggers, actions, and conditions to automate Stellar transactions, monitor balances, send notifications, and integrate with Telegram — all powered by Soroban smart contracts on the backend.
 
 > **What previously took days of development can now be accomplished in minutes with zero coding required.**
 
@@ -107,7 +107,7 @@ Live transaction feed pulled from the Stellar Horizon testnet API, charts for da
 > 🏆 [View the Demo Day Presentation (Google Slides) →](https://drive.google.com/file/d/1bFiVM3D4H_i8O7bQ0qmD4UmEp5nEzD8y/view?usp=sharing)
 > 
 > Includes:
-> - The Web3 UX Problem & StellrFlow Solution
+> - The Web3 UX Problem & Constella Solution
 > - Walkthrough of the Live Demo flow
 > - Highlights of Fee Sponsorship, Multisig, and the Telegram Integration
 > - Live Metrics and On-Chain Verification
@@ -116,7 +116,7 @@ Live transaction feed pulled from the Stellar Horizon testnet API, charts for da
 
 ## 💡 Why Stellar?
 
-Stellar is the ideal backbone for StellrFlow due to:
+Stellar is the ideal backbone for Constella due to:
 
 | Advantage | Detail |
 |-----------|--------|
@@ -147,7 +147,7 @@ Stellar is the ideal backbone for StellrFlow due to:
 
 ### 💬 Telegram Bot Integration
 
-Users create their own Telegram bot via **@BotFather** and connect it to StellrFlow:
+Users create their own Telegram bot via **@BotFather** and connect it to Constella:
 
 - **Wallet Management** — `/createwallet`, `/mywallet`, `/mybalance`, `/fundwallet`
 - **XLM Transfers** — `/send <address> <amount>` with on-chain confirmation

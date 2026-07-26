@@ -1,4 +1,4 @@
-// API service for StellrFlow - Stellar Telegram bot integration
+// API service for Constella - Stellar Telegram bot integration
 
 const STELLAR_BOT_URL =
   (typeof process !== "undefined" &&
@@ -105,8 +105,8 @@ export const telegramApi = {
   // Send welcome message when only Telegram block is connected (no other blocks)
   sendWelcomeMessage: async (chatId: string) => {
     const message =
-      `🎉 **Connected to StellrFlow!**\n\n` +
-      `Your Telegram is now linked to StellrFlow.\n\n` +
+      `🎉 **Connected to Constella!**\n\n` +
+      `Your Telegram is now linked to Constella.\n\n` +
       `⚠️ _No workflow blocks connected yet._\n\n` +
       `Add blocks in the workflow builder to enable features:\n` +
       `• **Stellar SDK (Chatbot)** - Ask questions about Stellar\n` +
@@ -180,7 +180,7 @@ export const telegramApi = {
 
   sendAuthMessage: async (chatId: string, workflowName?: string) => {
     const message =
-      `🔐 **StellrFlow Authentication**\n\n` +
+      `🔐 **Constella Authentication**\n\n` +
       `You're connected! Your workflow${workflowName ? ` "${workflowName}"` : ""} has started.\n\n` +
       `Reply with:\n` +
       `• /balance <address> - Check Stellar balance\n` +
@@ -361,7 +361,7 @@ export const nodeExecutors = {
       if (hasTelegramSend) enabledFeatures.push("Notifications");
 
       const message =
-        `🚀 **StellrFlow Connected!**\n\n` +
+        `🚀 **Constella Connected!**\n\n` +
         `Your workflow is now active with:\n` +
         enabledFeatures.map(f => `✅ ${f}`).join('\n') +
         `\n\n_Setting up features..._`;
@@ -393,7 +393,7 @@ export const nodeExecutors = {
       message = message.replace(/\{address\}/g, address);
     }
 
-    const formattedMessage = `🔔 <b>StellrFlow Notification</b>\n\n${message || "Notification from StellrFlow"}`;
+    const formattedMessage = `🔔 <b>Constella Notification</b>\n\n${message || "Notification from Constella"}`;
 
     const result = await stellarApi.sendTelegram(chatId, formattedMessage, "HTML");
 

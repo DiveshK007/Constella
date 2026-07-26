@@ -1,8 +1,8 @@
-# StellrFlow Growth & Analytics Report
+# Constella Growth & Analytics Report
 ## Level 7: Founder Belt
 
 ### Executive Summary
-StellrFlow has successfully transitioned from an MVP (Level 5) to a fully-fledged ecosystem product running on the Stellar Mainnet (Level 6), and is now focusing on scaling, user retention, and sustainable growth (Level 7). This report details our growth metrics, feedback loops, and strategies for continued adoption.
+Constella has successfully transitioned from an MVP (Level 5) to a fully-fledged ecosystem product running on the Stellar Mainnet (Level 6), and is now focusing on scaling, user retention, and sustainable growth (Level 7). This report details our growth metrics, feedback loops, and strategies for continued adoption.
 
 ### User Acquisition & Metrics
 - **New Mainnet Users Onboarded:** 55
@@ -23,7 +23,7 @@ Through onboarding our initial 55 users, we collected valuable feedback and iter
 
 ### Retention & Engagement Strategies
 - **Frictionless Onboarding:** By using Telegram, users can create a Stellar wallet in one click without downloading new apps or managing complex seed phrases initially.
-- **Ecosystem Integration:** We've built an open ecosystem guide to allow other dApps to hook into StellrFlow's notification engine, increasing the stickiness of our platform.
+- **Ecosystem Integration:** We've built an open ecosystem guide to allow other dApps to hook into Constella's notification engine, increasing the stickiness of our platform.
 - **Data-Driven Decisions:** The new `/metrics` dashboard allows us to monitor active users, transaction volume, and feature usage in real-time.
 
 ### Future Roadmap

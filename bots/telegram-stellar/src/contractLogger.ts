@@ -1,6 +1,6 @@
 /**
  * ============================================================
- *  StellrFlow — WorkflowRegistry contract logger
+ *  Constella — WorkflowRegistry contract logger
  * ============================================================
  *
  *  Records workflow / transaction runs on-chain by invoking the

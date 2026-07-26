@@ -1,6 +1,6 @@
 /**
  * ============================================================
- *  StellrFlow — Off-Ramp Service  (XLM → Fiat)
+ *  Constella — Off-Ramp Service  (XLM → Fiat)
  * ============================================================
  *
  *  Manages the full withdrawal lifecycle:

@@ -87,7 +87,7 @@ router.get("/users/export", requireAdminToken, async (_req, res) => {
     });
     const csv = buildUsersCsv(rows);
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
-    res.setHeader("Content-Disposition", 'attachment; filename="stellrflow_users.csv"');
+    res.setHeader("Content-Disposition", 'attachment; filename="constella_users.csv"');
     return res.status(200).send(csv);
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Export failed";

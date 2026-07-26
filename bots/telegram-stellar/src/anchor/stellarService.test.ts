@@ -1,5 +1,5 @@
 /**
- * StellrFlow — stellarService.ts Unit Tests
+ * Constella — stellarService.ts Unit Tests
  * ==========================================
  * Tests all exported functions:
  *   - getBalance        (3 cases)

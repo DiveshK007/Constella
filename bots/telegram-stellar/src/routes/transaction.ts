@@ -110,7 +110,7 @@ router.post("/fee-bump", walletLimiter, validate(schemas.feeBump), async (req, r
       success: true,
       hash: result.hash,
       feeSponsor: sponsorKeypair.publicKey(),
-      message: "Transaction fee sponsored by StellrFlow",
+      message: "Transaction fee sponsored by Constella",
     });
   } catch (error: unknown) {
     console.error("Fee bump error:", error);

@@ -29,7 +29,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'StellrFlow — Visual automation for Stellar',
+  title: 'Constella — Visual workflow automation on Stellar',
   description:
     'Build and run on-chain Stellar workflows on a drag-and-drop canvas. No code, verifiable on-chain.',
 };

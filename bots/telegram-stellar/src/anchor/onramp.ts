@@ -1,5 +1,5 @@
 /**
- * StellrFlow - On-Ramp Service (Fiat to XLM)
+ * Constella - On-Ramp Service (Fiat to XLM)
  *
  * Lifecycle: created -> pending -> processing -> completed | failed | expired
  *
@@ -70,7 +70,7 @@ export function createDeposit(
     exchangeRate: rate,
     walletAddress,
     status: 'created',
-    paymentLink: `https://stellrflow-anchor.demo/pay/${depositId}?amt=${fiatAmount}&cur=${currency.toUpperCase()}`,
+    paymentLink: `https://constella-anchor.demo/pay/${depositId}?amt=${fiatAmount}&cur=${currency.toUpperCase()}`,
     stellarTxHash: null,
     creditedXLM: 0,
     createdAt: now,

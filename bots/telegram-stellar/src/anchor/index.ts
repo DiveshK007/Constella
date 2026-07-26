@@ -1,5 +1,5 @@
 /**
- * StellrFlow - Anchor Module (barrel export)
+ * Constella - Anchor Module (barrel export)
  *
  * Usage: import { quickDeposit, ... } from './anchor/index.js';
  *

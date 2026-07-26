@@ -1,4 +1,4 @@
-# StellrFlow Telegram Bot - Stellar Soroban Contract
+# Constella Telegram Bot - Stellar Soroban Contract
 
 A minimal Soroban contract for on-chain audit trail (notification/payment counters). **Optional** - the Telegram bot works without deploying this contract.
 

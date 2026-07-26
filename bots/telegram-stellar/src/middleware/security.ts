@@ -1,5 +1,5 @@
 /**
- * Security middleware for StellrFlow API
+ * Security middleware for Constella API
  * - Rate limiting per IP
  * - CORS whitelist
  * - API key authentication for sensitive endpoints

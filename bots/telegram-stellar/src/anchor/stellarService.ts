@@ -1,6 +1,6 @@
 /**
  * ============================================================
- *  StellrFlow — Stellar Service Layer
+ *  Constella — Stellar Service Layer
  * ============================================================
  *
  *  PURPOSE

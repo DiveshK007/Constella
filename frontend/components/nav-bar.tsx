@@ -45,13 +45,13 @@ export function NavBar() {
 
   return (
     <nav className="relative z-20 flex items-center justify-between border-b border-white/10 glass px-3 py-2.5 md:px-4 md:py-3">
-      {/* Wordmark — monochrome mark + StellrFlow */}
-      <Link href="/" className="flex items-center gap-2" aria-label="StellrFlow home">
+      {/* Wordmark — monochrome mark + Constella */}
+      <Link href="/" className="flex items-center gap-2" aria-label="Constella home">
         <span className="grid h-8 w-8 place-items-center rounded-lg border border-white/15 bg-white/5">
           <Workflow className="h-4 w-4 text-foreground" />
         </span>
         <span className="font-display text-lg font-semibold tracking-tight text-foreground md:text-xl">
-          StellrFlow
+          Constella
         </span>
       </Link>
 

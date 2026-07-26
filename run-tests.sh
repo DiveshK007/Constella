@@ -1,6 +1,6 @@
 #!/bin/bash
 OUT="/Users/bond/StellrFlow/test-results.txt"
-echo "=== StellrFlow API Test Results ===" > $OUT
+echo "=== Constella API Test Results ===" > $OUT
 echo "Date: $(date)" >> $OUT
 echo "" >> $OUT
 
