@@ -9,25 +9,25 @@
   [![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)](https://www.typescriptlang.org/)
   [![Soroban](https://img.shields.io/badge/Soroban-Smart_Contracts-orange)](https://soroban.stellar.org/)
-  [![Tests](https://img.shields.io/badge/Tests-52_Passing-success)](bots/telegram-stellar/jest.config.cjs)
+  [![Tests](https://img.shields.io/badge/Tests-79_Passing-success)](bots/telegram-stellar/jest.config.cjs)
   [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
-  [![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-black)](https://stellr-flow-6rcr.vercel.app/)
-  [![CI](https://github.com/DiveshK007/StellrFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/DiveshK007/StellrFlow/actions/workflows/ci.yml)
+  [![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-black)](https://useconstella.vercel.app/)
+  [![CI](https://github.com/DiveshK007/Constella/actions/workflows/ci.yml/badge.svg)](https://github.com/DiveshK007/Constella/actions/workflows/ci.yml)
   
-  🌐 **[Live Demo → stellr-flow-6rcr.vercel.app](https://stellr-flow-6rcr.vercel.app/)**
+  🌐 **[Live Demo → useconstella.vercel.app](https://useconstella.vercel.app/)**
 </div>
 
 ---
 
 ## 🌐 Live Demo
 
-**[https://stellr-flow-6rcr.vercel.app](https://stellr-flow-6rcr.vercel.app)**
+**[https://useconstella.vercel.app](https://useconstella.vercel.app)**
 
 Try the full workflow builder, connect your Freighter wallet, and run automated Stellar transactions — no setup required.
 
 ## 📊 Metrics Dashboard
 
-**[https://stellr-flow-6rcr.vercel.app/metrics](https://stellr-flow-6rcr.vercel.app/metrics)**
+**[https://useconstella.vercel.app/metrics](https://useconstella.vercel.app/metrics)**
 
 Live transaction feed pulled from the Stellar Horizon testnet API, charts for daily active users and node usage, and on-chain WorkflowRegistry call counts — auto-refreshing every 30 seconds.
 
@@ -278,8 +278,8 @@ Every execution is logged on the Stellar blockchain. Click **"View on Explorer"*
 #### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/DiveshK007/StellrFlow.git
-cd StellrFlow
+git clone https://github.com/DiveshK007/Constella.git
+cd Constella
 ```
 
 #### 2. Setup Frontend
@@ -400,7 +400,7 @@ npx jest --config jest.config.cjs
 ## 📁 Project Structure
 
 ```
-StellrFlow/
+Constella/
 ├── frontend/                      # Next.js workflow builder UI
 │   ├── app/                       # App router pages
 │   │   ├── page.tsx               # Main workflow builder
