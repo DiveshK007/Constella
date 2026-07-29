@@ -15,7 +15,7 @@ import {
   accountExists,
 } from "../state.js";
 
-const router = Router();
+const router: Router = Router();
 
 // Build unsigned transaction XDR (for Freighter to sign)
 router.post("/build", walletLimiter, validate(schemas.buildTransaction), async (req, res) => {

@@ -15,7 +15,7 @@ import {
 } from "../state.js";
 import { collectUserRows, buildUsersCsv } from "../usersExport.js";
 
-const router = Router();
+const router: Router = Router();
 
 // Health check (public)
 router.get("/health", (_req, res) => {

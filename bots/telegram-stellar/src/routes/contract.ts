@@ -9,7 +9,7 @@ import { validate, schemas } from "../middleware/validation.js";
 import { STELLAR_NETWORK } from "../state.js";
 import { buildLogExecutionXdr, submitSignedXdr } from "../contractLogger.js";
 
-const router = Router();
+const router: Router = Router();
 
 // Build a prepared log_execution transaction for Freighter to sign.
 router.post("/log/build", walletLimiter, validate(schemas.logBuild), async (req, res) => {

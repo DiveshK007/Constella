@@ -11,7 +11,7 @@ import {
   nextScheduleId,
 } from "../state.js";
 
-const router = Router();
+const router: Router = Router();
 
 // Create scheduled payment
 router.post("/create", walletLimiter, validate(schemas.createAutoPay), (req, res) => {

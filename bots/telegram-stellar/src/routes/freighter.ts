@@ -13,7 +13,7 @@ import {
   saveWallets,
 } from "../state.js";
 
-const router = Router();
+const router: Router = Router();
 
 // Connect Freighter wallet
 router.post("/connect", authLimiter, validate(schemas.freighterConnect), (req, res) => {

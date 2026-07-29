@@ -7,7 +7,7 @@ import { walletLimiter } from "../middleware/security.js";
 import { validate, schemas } from "../middleware/validation.js";
 import { multisigConfigs, nextMultisigId } from "../state.js";
 
-const router = Router();
+const router: Router = Router();
 
 // Create multisig configuration
 router.post("/create", walletLimiter, validate(schemas.createMultisig), (req, res) => {

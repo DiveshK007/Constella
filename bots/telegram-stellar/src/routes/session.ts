@@ -7,7 +7,7 @@ import { authLimiter } from "../middleware/security.js";
 import { validate, schemas } from "../middleware/validation.js";
 import { activeSessions } from "../state.js";
 
-const router = Router();
+const router: Router = Router();
 
 // Register session
 router.post("/register", authLimiter, validate(schemas.sessionRegister), (req, res) => {

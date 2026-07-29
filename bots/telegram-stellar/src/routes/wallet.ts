@@ -16,7 +16,7 @@ import {
   accountExists,
 } from "../state.js";
 
-const router = Router();
+const router: Router = Router();
 
 // Create wallet
 router.post("/create", authLimiter, validate(schemas.createWallet), (req, res) => {

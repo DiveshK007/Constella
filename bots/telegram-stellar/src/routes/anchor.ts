@@ -21,7 +21,7 @@ import {
   getUserWithdrawals,
 } from "../anchor/index.js";
 
-const router = Router();
+const router: Router = Router();
 
 // POST /deposit — Trigger deposit (on-ramp)
 router.post("/deposit", walletLimiter, validate(schemas.anchorDeposit), async (req, res) => {
