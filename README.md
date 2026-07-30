@@ -76,21 +76,17 @@ Live transaction feed pulled from the Stellar Horizon testnet API, charts for da
 
 ## 📸 Screenshots
 
-| Wallet Connected | Balance Display |
-|:---:|:---:|
-| ![Wallet Connected](screenshots/1-wallet-connected.png) | ![Balance Display](screenshots/2-balance-display.png) |
-
-| Sending Transaction | Transaction Result |
-|:---:|:---:|
-| ![Sending Transaction](screenshots/3-send-transaction.png) | ![Transaction Result](screenshots/4-transaction-result.png) |
-
-| Workflow Builder |
+| Workflow Builder — connected trigger + actions |
 |:---:|
-| ![Workflow Builder](screenshots/5-workflow-builder.png) |
+| ![Workflow Builder](screenshots/constella-workflow-builder.png) |
 
-| 📱 Mobile Responsive |
+| Wallet Connected |
 |:---:|
-| ![Mobile View](screenshots/7-mobile-view.png) |
+| ![Wallet Connected](screenshots/constella-wallet-connected.png) |
+
+| Metrics Dashboard — live on-chain execution count |
+|:---:|
+| ![Metrics Dashboard](screenshots/constella-metrics-dashboard.png) |
 
 ---
 
