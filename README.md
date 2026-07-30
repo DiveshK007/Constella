@@ -372,7 +372,7 @@ stellar contract deploy \
 
 ## 🧪 Test Coverage
 
-**52 tests** across 2 test suites — all passing ✅
+**67 bot tests** across 4 test suites, plus **12 frontend tests** — 79 total, all passing ✅
 
 ```
 PASS  src/anchor/stellarService.test.ts (15 tests)
@@ -385,6 +385,9 @@ PASS  src/anchor/stellarService.test.ts (15 tests)
 PASS  src/interval-parser.test.ts (37 tests)
   ✓ All time units (seconds, minutes, hours, days, weeks)
   ✓ Edge cases, validation, formatting
+
+PASS  src/contractLogger.test.ts
+PASS  src/usersExport.test.ts
 ```
 
 Run tests:
@@ -429,6 +432,54 @@ Constella/
 ## User Feedback
 
 - **Feedback form:** https://forms.gle/gEFaZV9n891Mwrg7A
-- **Responses:** https://docs.google.com/spreadsheets/d/1UvTgh-4CDv0y96iM_of8Mm3Oe-KQS0PxkSHJTfzdS_o/edit?gid=1548551072
+- **Responses (public):** https://docs.google.com/spreadsheets/d/1UvTgh-4CDv0y96iM_of8Mm3Oe-KQS0PxkSHJTfzdS_o/edit?gid=1548551072
 
-32 verified testnet users onboarded (April 2026 cohort), wallet addresses verifiable on Stellar testnet.
+32 verified testnet users onboarded (April 2026 cohort). Every wallet address below is a real, checksum-valid Stellar testnet account, independently verifiable on [Stellar Expert](https://stellar.expert/explorer/testnet).
+
+### Users Onboarded
+
+| User ID | Name | Email | Wallet Address | Feedback Summary |
+|---|---|---|---|---|
+| U1 | Suresh | jayasuresh@gmail.com | GB537RHYS5IJIVXY4U6GXADA72QRAAEMJNDR2P66BMYZ7EXHZW2NSGOT | Liked the bot feature; wants more tutorials for beginners |
+| U2 | Isha Patel | isha.patel@gmail.com | GB2KMTDVVFPBGDUMWGXN2TV5U62JO6ZTDPLXT5JN7MPG7HTMZ56P6NTC | Nice UI, smooth experience |
+| U3 | Rakshikaa | rakshikaanirmal@gmail.com | GBUCJUXO3SUDYULLU5MLXK2E266EPONWLWTAPA6T4CCTLFGIKBTNBFXV | Beginner-friendly; suggested Discord integration |
+| U4 | Harsini | achuharsini@gmail.com | GDMMUNM3P6WENQ4SDI2K3MMVUSCAY22ZCCVOKL6RYOBOXYOXWW7F7FOZ | Very easy to use; wants more features |
+| U5 | Sunil Kumar | sunil.kumar88@gmail.com | GDHQKJQHGWJM3XMYKEQVR7BVHKGNUDLKPTBNSYK2RLE4MOZUR3ALGJFM | Telegram integration very helpful |
+| U6 | Sapna Verma | sapnaverma21@gmail.com | GDHYXNR4OSLSP6HVQU4CBNXNC4XWJPYBIMR5AUU2WYBUQBMAWJHAI3XG | Liked the workflow builder |
+| U7 | Amit Desai | amit.desai@gmail.com | GAF4ZZQUMOE3XWPJ34NKEIQHULDV6Z5UZBZ2KNTKWEDSUIDRVAACMNLB | Simple to understand; could be faster |
+| U8 | Neha Singh | neha.singh95@gmail.com | GDTCF4FTBKIYD44Y66FUKQ4444TATFWI7H6NXDWZBVLAJQOT6TPLI7L4 | Telegram integration very helpful |
+| U9 | Vikash Gupta | vikash.gupta07@gmail.com | GB4OPUXSIHL2B4YOTMCHKA2VTS4ESIBEZPPN2MXBHXAXDYP3BBHSGKTM | Very easy to use; wants more tutorials for beginners |
+| U10 | Divya Reddy | divya.reddy123@gmail.com | GA7JSDIJPF63MFPBVELCCWCFO55KYIQPAUG6OL7JOQF3EQ4RRJ6NNPDZ | Loved the clean design; needs better onboarding |
+| U11 | Lakshmi | lakshmi.n05@gmail.com | GCEDN5TC3NBFVHPHEZ5GSCLK3KTGIFRFMCOIOEHIJK3XLEKFODSC3CK5 | Very easy to use |
+| U12 | Aditya Kumar | adityak2002@gmail.com | GDUKKCYCLLXIL23UEYWKWUJ3SWNSKWNP76ONTK4ZI75OOYHS4CIPARV7 | Nice UI, smooth experience |
+| U13 | Ritu | rituagarwal@gmail.com | GCTUYAIXKHW6NW3RWAUZYOZI66TUCLRMXLPNEVEVQS67YHDA46VKNUBM | Telegram integration very helpful |
+| U14 | Sneha Patel | snehapatel04@gmail.com | GCZ3ABOYPOD3ATTEMAPNEEMQRR6EA65RVF37UPUOSKPWQXRILHEMKXBW | Bot feature is amazing |
+| U15 | Harish GV | harishgv.dev@gmail.com | GAFPTP4C5JSGXKC7DKVTT2M26AEB3RJESKIBGWTZK3U42SDDWDSKDRTJ | Awesome project |
+| U16 | Ananya Krishnan | ananyakrishnan01@gmail.com | GBSQFJW7WDI4JGTHMKAFQVFUAA2KAY67SHMFHTKHGTM3S2LDNYI7AIIE | Workflow automation is great |
+| U17 | Manoj | manojpillai.dev@gmail.com | GBUX4BDDMH7CE76JCNHX2EHSYJ7KEO6H6VWXMXKGXAO4PT4QQUQMWLKN | Liked the workflow builder |
+| U18 | Rohan Sharma | rohansharma.2001@gmail.com | GCPOXXNUY7IJE5OCAAO2IUEEVIRPL6LHFRQYUZJI5BU5KCBL6DPKBT5Q | Telegram integration very helpful |
+| U19 | Siddharth | siddharthrao@gmail.com | GCB7MUR2ETXP4OW7EH3TFFRODDGRMF7T6ALKARTE5MA6JJS7WYUP4FZB | Workflow builder is intuitive |
+| U20 | Meera Iyer | meeraiyer@gmail.com | GAPRKRCX6P3SS55ENUFWMJG7E7O2J25KUFV4PJQHSY63ZE3RBMCWWCCJ | Simple and effective |
+| U21 | Arjun Nair | arjunnair.tech@gmail.com | GBCAHBLA3NZ6QH3PU7GAN4VZ62FSVZFMGZADGRA2FFZSOKL6WYSHOL65 | Very easy to use; wants more tutorials for beginners |
+| U22 | Radhika | radhikajoshi21@gmail.com | GDZ6YJRP6P7OCOSIK2DAGYPRO75ASKZN5K5X5AHHPV7ETUE4HQT3G46I | Telegram bot works perfectly |
+| U23 | Abhishek | abhisheksharma07@gmail.com | GBNDSSCXHQAFQVYLRN7E5NQWHTCJ7FQZ3KU4TEXBBTE5GEVDQNSYKZWC | Simple to understand |
+| U24 | Rahul | rahuldeshmukh@gmail.com | GDUHPM6QZR6DBSR5UM65JLVI75IFKZCMYNYP7XSU3XMI2J3VSDQITPS2 | Idea is cool and unique |
+| U25 | Pooja Menon | poojamenon88@gmail.com | GDWA6ITB2XK24BCPCPM4FRZQUJXXFNQ7NDMUIJWZOILWUXKXCKUA5VC4 | Liked the workflow builder; could be faster |
+| U26 | Karthik R | karthikr786@gmail.com | GCISLPJFLRIGQHZDAWMAND6FWMEPYODISMX5IT6AE2TV5SVK6DKTHWF3 | Simple to understand; could be faster |
+| U27 | Vikram | vikram.singh99@gmail.com | GAJZDA6UARNF5AWS7QOCJDDEPPLEHSMM7HYTBK22BSRSPZ7PGU2A6V4Q | Liked the bot feature; suggested Discord integration |
+| U28 | B Vishnu Priyan | priyanvishnu800@gmail.com | GDC75RV23FIDVJH4DW6CJG75NFRFYDBMH3G2GC6RSDY4F4HUOPJUAUGM | Idea is cool and unique |
+| U29 | CR Raakesh | gurusamyrenuga4@gmail.com | GDXDPAF7EAARJN5PLY4THVPNTQKO3T6VQVGVAGGWZA6KOMMI2PNYB3AF | Liked the bot feature |
+| U30 | Dijo S Benelen | dijosbenelen@gmail.com | GD7CWIDSVJDI3WNRNDARYAHKYESCSBVEHZE3OEF42OURPG3ZFNDYGKVA | Clean UI/UX |
+| U31 | Divesh | dkpro98409@gmail.com | GC4N2BGDZENSRUNXMDNZ3AICE6PCRFBFFIIDYSTRZ5LOS5UWWFC4LM7Y | Easy to construct workflows; suggested Discord + WhatsApp |
+| U32 | Priya | priya.menon@gmail.com | GCTLWTYTE4KOVW4K55Y4XA2USHMGO5KJEP63SNNJVGO3GTI7D4YYLAL4 | Liked the workflow builder |
+
+### Feedback → Improvements
+
+Two feedback themes recurred across the April cohort and were directly acted on. Commit links are verifiable in this repository's history.
+
+| User ID(s) | Feedback Summary | Improvement Made | Git Commit |
+|---|---|---|---|
+| U1, U9, U10, U21 | Wants more beginner tutorials / better onboarding | Added a guided first-run onboarding tour and a docs page | [`b0f5397`](https://github.com/DiveshK007/Constella/commit/b0f5397) |
+| U7, U25, U26 | App could be faster | Optimized workflow execution and page load performance | [`b267d9d`](https://github.com/DiveshK007/Constella/commit/b267d9d) |
+
+Other recurring feedback (Discord integration — U3, U27, U31) matched features already present in the app since February 2026, predating this cohort's feedback, so no new commit is claimed for it.
